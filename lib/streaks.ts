@@ -136,3 +136,71 @@ export async function getStreakLast90Days(): Promise<number> {
     const start = subDays(today, 89); // 90 days total
     return calculateStreak(today, start);
 }
+
+export interface DayStreakData {
+    date: Date;
+    dateStr: string;
+    dayLabel: string; // Mon, Tue, etc.
+    hasWorkout: boolean;
+    isRestDay: boolean;
+    isToday: boolean;
+    isFuture: boolean;
+}
+
+/**
+ * Returns detailed day-by-day streak data for the current week (Mon-Sun).
+ */
+export async function getWeeklyStreakData(): Promise<DayStreakData[]> {
+    const today = new Date();
+    const todayStr = toYYYYMMDD(today);
+
+    // Get the Monday of current week
+    const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + diffToMonday);
+
+    // Get the Sunday of current week
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+
+    const mondayStr = toYYYYMMDD(monday);
+    const sundayStr = toYYYYMMDD(sunday);
+
+    // Fetch workouts and rest days for this week
+    const workouts = await getWorkoutsByDateRange(
+        mondayStr,
+        sundayStr + "T23:59:59"
+    );
+    const restDays = await getRestDays(mondayStr, sundayStr);
+
+    // Create a set of workout dates
+    const workoutDates = new Set<string>();
+    workouts.forEach((w) => {
+        workoutDates.add(toYYYYMMDD(new Date(w.date)));
+    });
+
+    // Create a set of rest day dates
+    const restDayDates = new Set<string>(restDays);
+
+    const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const weekData: DayStreakData[] = [];
+
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + i);
+        const dateStr = toYYYYMMDD(date);
+
+        weekData.push({
+            date,
+            dateStr,
+            dayLabel: dayLabels[i],
+            hasWorkout: workoutDates.has(dateStr),
+            isRestDay: restDayDates.has(dateStr),
+            isToday: dateStr === todayStr,
+            isFuture: date > today,
+        });
+    }
+
+    return weekData;
+}

@@ -3,15 +3,24 @@ import { useCallback, useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
+    addRestDay,
     getUserProfile,
     getWorkouts,
+    removeRestDay,
     type UserProfile,
     type Workout,
 } from "../../lib/database";
 import { getGoalProgress, type GoalProgressItem } from "../../lib/goalTracking";
+import {
+    getCurrentStreak,
+    getWeeklyStreakData,
+    type DayStreakData,
+} from "../../lib/streaks";
 import Button from "../components/Button";
 import FloatingActionButton from "../components/FloatingActionButton";
 import GoalTrackingCard from "../components/GoalTrackingCard";
+import RestDayModal from "../components/RestDayModal";
+import StreakCard from "../components/StreakCard";
 import WorkoutCard from "../components/WorkoutCard";
 
 export default function HomeScreen() {
@@ -22,6 +31,12 @@ export default function HomeScreen() {
     const [goals, setGoals] = useState<GoalProgressItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    // Streak state
+    const [currentStreak, setCurrentStreak] = useState(0);
+    const [weeklyData, setWeeklyData] = useState<DayStreakData[]>([]);
+    const [selectedDay, setSelectedDay] = useState<DayStreakData | null>(null);
+    const [isRestDayModalVisible, setIsRestDayModalVisible] = useState(false);
+
     useFocusEffect(
         useCallback(() => {
             loadData();
@@ -30,18 +45,41 @@ export default function HomeScreen() {
 
     const loadData = async () => {
         try {
-            const [profileData, workoutsData, goalsData] = await Promise.all([
+            const [
+                profileData,
+                workoutsData,
+                goalsData,
+                streakData,
+                weeklyStreakData,
+            ] = await Promise.all([
                 getUserProfile(),
                 getWorkouts(5),
                 getGoalProgress(),
+                getCurrentStreak(),
+                getWeeklyStreakData(),
             ]);
             setUser(profileData);
             setWorkouts(workoutsData);
             setGoals(goalsData);
+            setCurrentStreak(streakData);
+            setWeeklyData(weeklyStreakData);
         } catch (error) {
             console.error("Failed to load data:", error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const loadStreakData = async () => {
+        try {
+            const [streakData, weeklyStreakData] = await Promise.all([
+                getCurrentStreak(),
+                getWeeklyStreakData(),
+            ]);
+            setCurrentStreak(streakData);
+            setWeeklyData(weeklyStreakData);
+        } catch (error) {
+            console.error("Failed to load streak data:", error);
         }
     };
 
@@ -51,6 +89,34 @@ export default function HomeScreen() {
 
     const handleViewMore = () => {
         router.push("/history");
+    };
+
+    const handleDayPress = (day: DayStreakData) => {
+        setSelectedDay(day);
+        setIsRestDayModalVisible(true);
+    };
+
+    const handleMarkRestDay = async () => {
+        if (!selectedDay) return;
+        await addRestDay(selectedDay.dateStr);
+        setIsRestDayModalVisible(false);
+        await loadStreakData();
+    };
+
+    const handleRemoveRestDay = async () => {
+        if (!selectedDay) return;
+        await removeRestDay(selectedDay.dateStr);
+        setIsRestDayModalVisible(false);
+        await loadStreakData();
+    };
+
+    const formatDayLabel = (day: DayStreakData): string => {
+        const options: Intl.DateTimeFormatOptions = {
+            weekday: "long",
+            month: "short",
+            day: "numeric",
+        };
+        return day.date.toLocaleDateString("en-US", options);
     };
 
     const greeting = user?.name ? `Hello, ${user.name}` : "Hello, Athlete";
@@ -77,6 +143,13 @@ export default function HomeScreen() {
                                 onPress={handleLogWorkout}
                                 icon="add-circle"
                                 style={styles.ctaButton}
+                            />
+
+                            {/* Streaks */}
+                            <StreakCard
+                                currentStreak={currentStreak}
+                                weeklyData={weeklyData}
+                                onDayPress={handleDayPress}
                             />
 
                             {/* Goals */}
@@ -127,6 +200,20 @@ export default function HomeScreen() {
 
             {/* Floating Action Button */}
             <FloatingActionButton onPress={handleLogWorkout} />
+
+            {/* Rest Day Modal */}
+            {selectedDay && (
+                <RestDayModal
+                    visible={isRestDayModalVisible}
+                    date={selectedDay.dateStr}
+                    dayLabel={formatDayLabel(selectedDay)}
+                    isRestDay={selectedDay.isRestDay}
+                    hasWorkout={selectedDay.hasWorkout}
+                    onMarkRestDay={handleMarkRestDay}
+                    onRemoveRestDay={handleRemoveRestDay}
+                    onClose={() => setIsRestDayModalVisible(false)}
+                />
+            )}
         </View>
     );
 }
@@ -155,7 +242,7 @@ const styles = StyleSheet.create({
         color: "#a0a0a0",
     },
     ctaButton: {
-        marginBottom: 32,
+        marginBottom: 16,
     },
     section: {
         flex: 1,
