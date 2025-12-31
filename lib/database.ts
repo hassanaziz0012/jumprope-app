@@ -11,6 +11,7 @@ export async function initDatabase(): Promise<void> {
       name TEXT NOT NULL,
       email TEXT,
       image TEXT,
+      theme TEXT DEFAULT 'system',
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -54,6 +55,15 @@ export async function initDatabase(): Promise<void> {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+    // Migration: Add theme column if it doesn't exist
+    try {
+        await db.execAsync(
+            "ALTER TABLE user_profile ADD COLUMN theme TEXT DEFAULT 'system'"
+        );
+    } catch (e) {
+        // Column likely already exists
+    }
 }
 
 // ============ Rest Days Functions ============
@@ -120,6 +130,16 @@ export async function saveUserProfile(
             "INSERT INTO user_profile (name, email, image) VALUES (?, ?, ?)",
             [name, email ?? null, image ?? null]
         );
+    }
+}
+
+export async function updateUserTheme(theme: string): Promise<void> {
+    const existing = await getUserProfile();
+    if (existing) {
+        await db.runAsync("UPDATE user_profile SET theme = ? WHERE id = ?", [
+            theme,
+            existing.id,
+        ]);
     }
 }
 
@@ -295,6 +315,8 @@ export interface UserProfile {
     name: string;
     email: string | null;
     image: string | null;
+
+    theme: "light" | "dark" | "system";
     created_at: string;
 }
 

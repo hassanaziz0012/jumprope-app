@@ -11,7 +11,11 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { getUserProfile, type UserProfile } from "../../lib/database";
+import {
+    getUserProfile,
+    updateUserTheme,
+    type UserProfile,
+} from "../../lib/database";
 import { aboutLinks } from "../../lib/social";
 import ProfileCard from "../components/ProfileCard";
 import SettingsItem from "../components/SettingsItem";
@@ -35,6 +39,14 @@ export default function SettingsScreen() {
     const loadProfile = async () => {
         const profile = await getUserProfile();
         setUser(profile);
+        if (profile?.theme) {
+            setTheme(profile.theme as ThemeOption);
+        }
+    };
+
+    const handleThemeChange = async (newTheme: ThemeOption) => {
+        setTheme(newTheme);
+        await updateUserTheme(newTheme);
     };
 
     const handleProfilePress = () => {
@@ -111,7 +123,9 @@ export default function SettingsScreen() {
                                             theme === option &&
                                                 styles.themeOptionActive,
                                         ]}
-                                        onPress={() => setTheme(option)}
+                                        onPress={() =>
+                                            handleThemeChange(option)
+                                        }
                                     >
                                         <Text
                                             style={[
