@@ -16,7 +16,6 @@ interface AreaChartProps {
     startOpacity?: number;
     endOpacity?: number;
     noOfSections?: number;
-    maxValue?: number;
 }
 
 const AreaChart: React.FC<AreaChartProps> = ({
@@ -29,13 +28,21 @@ const AreaChart: React.FC<AreaChartProps> = ({
     startOpacity = 0.3,
     endOpacity = 0.05,
     noOfSections = 4,
-    maxValue,
 }) => {
-    // Default data if none provided, just for visualization safety
-    const chartData = data.length > 0 ? data : [{ value: 0, label: "" }];
+    // Process data to ensure clean props for the library
+    // const chartData = (data.length > 0 ? data : [{ value: 0 }]).map((item) => ({
+    //     value: Number(item.value),
+    //     label: item.label,
+    // }));
+    const chartData = data.map((item) => ({
+        value: Number(item.value),
+        label: item.label,
+    }));
 
     const Y_AXIS_WIDTH = 50;
     const chartWidth = width ? width - Y_AXIS_WIDTH : undefined;
+
+    const maxValue = Math.max(...chartData.map((d) => d.value));
 
     return (
         <View style={styles.container}>
@@ -43,7 +50,7 @@ const AreaChart: React.FC<AreaChartProps> = ({
                 areaChart
                 data={chartData}
                 height={height}
-                width={chartWidth} // If undefined, it takes full width
+                width={chartWidth}
                 color={color}
                 startFillColor={startFillColor}
                 endFillColor={endFillColor}
@@ -58,16 +65,16 @@ const AreaChart: React.FC<AreaChartProps> = ({
                 xAxisLabelTextStyle={{ color: "#a0a0a0", fontSize: 12 }}
                 noOfSections={noOfSections}
                 maxValue={maxValue}
-                initialSpacing={10}
+                initialSpacing={20}
+                spacing={40}
                 // Adjusting layout for dark mode
                 rulesColor="#333333"
                 rulesType="solid"
-                curved
-                isAnimated
-                scrollToEnd
+                // isAnimated
                 hideDataPoints={false}
                 dataPointsColor={color}
                 dataPointsRadius={3}
+                scrollToEnd
             />
         </View>
     );
