@@ -45,6 +45,14 @@ export async function initDatabase(): Promise<void> {
       date TEXT NOT NULL UNIQUE,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS charts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      metric TEXT NOT NULL,
+      time_range TEXT NOT NULL,
+      type TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 }
 
@@ -263,6 +271,23 @@ export async function clearGoal(
     await updateGoal(goalType, null);
 }
 
+// ============ Charts Functions ============
+
+export async function addChart(chart: CreateChartInput): Promise<void> {
+    await db.runAsync(
+        "INSERT INTO charts (metric, time_range, type) VALUES (?, ?, ?)",
+        [chart.metric, chart.timeRange, chart.type]
+    );
+}
+
+export async function getCharts(): Promise<Chart[]> {
+    return await db.getAllAsync<Chart>("SELECT * FROM charts ORDER BY id DESC");
+}
+
+export async function deleteChart(id: number): Promise<void> {
+    await db.runAsync("DELETE FROM charts WHERE id = ?", [id]);
+}
+
 // ============ Types ============
 
 export interface UserProfile {
@@ -309,6 +334,20 @@ export interface Goals {
     weekly_duration: number | null;
     skip_rate_goal: number | null;
     updated_at: string;
+}
+
+export interface Chart {
+    id: number;
+    metric: string;
+    time_range: string;
+    type: string;
+    created_at: string;
+}
+
+export interface CreateChartInput {
+    metric: string;
+    timeRange: string;
+    type: "bar" | "area";
 }
 
 export { db };

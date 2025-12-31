@@ -67,8 +67,6 @@ const styles = StyleSheet.create({
     container: {
         // We don't enforce background here to allow flexibility,
         // but the chart text is styled for dark mode.
-        alignItems: "center",
-        justifyContent: "center",
     },
 });
 
