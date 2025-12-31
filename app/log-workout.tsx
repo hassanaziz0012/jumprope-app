@@ -1,9 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker, {
+    DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
     KeyboardAvoidingView,
     Platform,
+    Pressable,
     ScrollView,
     StyleSheet,
     Text,
@@ -17,25 +21,105 @@ import Button from "./components/Button";
 export default function LogWorkoutScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
-    const [duration, setDuration] = useState("");
+    const [workoutDate, setWorkoutDate] = useState<Date | null>(null);
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showTimePicker, setShowTimePicker] = useState(false);
+    const [durationMinutes, setDurationMinutes] = useState("");
+    const [durationSeconds, setDurationSeconds] = useState("");
     const [totalSkips, setTotalSkips] = useState("");
+    const [avgSkipsPerMinute, setAvgSkipsPerMinute] = useState("");
     const [trips, setTrips] = useState("");
     const [calories, setCalories] = useState("");
+    const [avgHeartRate, setAvgHeartRate] = useState("");
+    const [maxHeartRate, setMaxHeartRate] = useState("");
     const [notes, setNotes] = useState("");
     const [isSaving, setIsSaving] = useState(false);
 
+    const handleDateChange = (
+        event: DateTimePickerEvent,
+        selectedDate?: Date
+    ) => {
+        setShowDatePicker(false);
+        if (event.type === "set" && selectedDate) {
+            // Preserve time if already set, otherwise use current time
+            const newDate = workoutDate
+                ? new Date(
+                      selectedDate.getFullYear(),
+                      selectedDate.getMonth(),
+                      selectedDate.getDate(),
+                      workoutDate.getHours(),
+                      workoutDate.getMinutes()
+                  )
+                : selectedDate;
+            setWorkoutDate(newDate);
+        }
+    };
+
+    const handleTimeChange = (
+        event: DateTimePickerEvent,
+        selectedTime?: Date
+    ) => {
+        setShowTimePicker(false);
+        if (event.type === "set" && selectedTime) {
+            // Preserve date if already set, otherwise use today
+            const baseDate = workoutDate || new Date();
+            const newDate = new Date(
+                baseDate.getFullYear(),
+                baseDate.getMonth(),
+                baseDate.getDate(),
+                selectedTime.getHours(),
+                selectedTime.getMinutes()
+            );
+            setWorkoutDate(newDate);
+        }
+    };
+
+    const formatDate = (date: Date) => {
+        return date.toLocaleDateString(undefined, {
+            weekday: "short",
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+        });
+    };
+
+    const formatTime = (date: Date) => {
+        return date.toLocaleTimeString(undefined, {
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    };
+
+    // Calculate total duration in seconds
+    const getTotalDurationSeconds = () => {
+        const mins = parseInt(durationMinutes, 10) || 0;
+        const secs = parseInt(durationSeconds, 10) || 0;
+        return mins * 60 + secs;
+    };
+
     const handleSave = async () => {
-        if (!duration || !totalSkips) {
+        const totalDuration = getTotalDurationSeconds();
+        if (totalDuration <= 0 || !totalSkips) {
             return; // Basic validation
         }
 
         setIsSaving(true);
         try {
             await createWorkout({
-                duration: parseInt(duration, 10) * 60, // Convert minutes to seconds
+                date: workoutDate?.toISOString(),
+                duration: totalDuration,
                 totalSkips: parseInt(totalSkips, 10),
+                avgSkipsPerMinute: avgSkipsPerMinute
+                    ? parseFloat(avgSkipsPerMinute)
+                    : undefined,
                 trips: trips ? parseInt(trips, 10) : 0,
                 calories: calories ? parseFloat(calories) : undefined,
+                heartRateAvg: avgHeartRate
+                    ? parseInt(avgHeartRate, 10)
+                    : undefined,
+                heartRateMax: maxHeartRate
+                    ? parseInt(maxHeartRate, 10)
+                    : undefined,
                 notes: notes || undefined,
             });
             router.back();
@@ -68,7 +152,11 @@ export default function LogWorkoutScreen() {
                         title="Save"
                         onPress={handleSave}
                         variant="ghost"
-                        disabled={!duration || !totalSkips || isSaving}
+                        disabled={
+                            getTotalDurationSeconds() <= 0 ||
+                            !totalSkips ||
+                            isSaving
+                        }
                     />
                 </View>
 
@@ -76,6 +164,69 @@ export default function LogWorkoutScreen() {
                     style={styles.form}
                     contentContainerStyle={styles.formContent}
                 >
+                    {/* Date & Time */}
+                    <View style={styles.inputGroup}>
+                        <View style={styles.labelRow}>
+                            <Ionicons
+                                name="calendar-outline"
+                                size={20}
+                                color="#a0a0a0"
+                            />
+                            <Text style={styles.label}>
+                                Date & Time (optional)
+                            </Text>
+                        </View>
+                        <View style={styles.dateTimeRow}>
+                            <Pressable
+                                style={styles.dateTimeButton}
+                                onPress={() => setShowDatePicker(true)}
+                            >
+                                <Ionicons
+                                    name="calendar"
+                                    size={18}
+                                    color="#a0a0a0"
+                                />
+                                <Text style={styles.dateTimeButtonText}>
+                                    {workoutDate
+                                        ? formatDate(workoutDate)
+                                        : "Today"}
+                                </Text>
+                            </Pressable>
+                            <Pressable
+                                style={styles.dateTimeButton}
+                                onPress={() => setShowTimePicker(true)}
+                            >
+                                <Ionicons
+                                    name="time"
+                                    size={18}
+                                    color="#a0a0a0"
+                                />
+                                <Text style={styles.dateTimeButtonText}>
+                                    {workoutDate
+                                        ? formatTime(workoutDate)
+                                        : "Now"}
+                                </Text>
+                            </Pressable>
+                        </View>
+                        {showDatePicker && (
+                            <DateTimePicker
+                                value={workoutDate || new Date()}
+                                mode="date"
+                                display="default"
+                                onChange={handleDateChange}
+                                maximumDate={new Date()}
+                            />
+                        )}
+                        {showTimePicker && (
+                            <DateTimePicker
+                                value={workoutDate || new Date()}
+                                mode="time"
+                                display="default"
+                                onChange={handleTimeChange}
+                            />
+                        )}
+                    </View>
+
                     {/* Duration */}
                     <View style={styles.inputGroup}>
                         <View style={styles.labelRow}>
@@ -84,16 +235,34 @@ export default function LogWorkoutScreen() {
                                 size={20}
                                 color="#a0a0a0"
                             />
-                            <Text style={styles.label}>Duration (minutes)</Text>
+                            <Text style={styles.label}>Duration</Text>
                         </View>
-                        <TextInput
-                            style={styles.input}
-                            value={duration}
-                            onChangeText={setDuration}
-                            placeholder="e.g. 15"
-                            placeholderTextColor="#666666"
-                            keyboardType="numeric"
-                        />
+                        <View style={styles.durationRow}>
+                            <View style={styles.durationInputWrapper}>
+                                <TextInput
+                                    style={styles.durationInput}
+                                    value={durationMinutes}
+                                    onChangeText={setDurationMinutes}
+                                    placeholder="0"
+                                    placeholderTextColor="#666666"
+                                    keyboardType="numeric"
+                                    maxLength={3}
+                                />
+                                <Text style={styles.durationLabel}>min</Text>
+                            </View>
+                            <View style={styles.durationInputWrapper}>
+                                <TextInput
+                                    style={styles.durationInput}
+                                    value={durationSeconds}
+                                    onChangeText={setDurationSeconds}
+                                    placeholder="0"
+                                    placeholderTextColor="#666666"
+                                    keyboardType="numeric"
+                                    maxLength={2}
+                                />
+                                <Text style={styles.durationLabel}>sec</Text>
+                            </View>
+                        </View>
                     </View>
 
                     {/* Total Skips */}
@@ -138,6 +307,28 @@ export default function LogWorkoutScreen() {
                         />
                     </View>
 
+                    {/* Avg Skips per Minute */}
+                    <View style={styles.inputGroup}>
+                        <View style={styles.labelRow}>
+                            <Ionicons
+                                name="speedometer-outline"
+                                size={20}
+                                color="#a0a0a0"
+                            />
+                            <Text style={styles.label}>
+                                Avg Skips/min (optional)
+                            </Text>
+                        </View>
+                        <TextInput
+                            style={styles.input}
+                            value={avgSkipsPerMinute}
+                            onChangeText={setAvgSkipsPerMinute}
+                            placeholder="Auto-calculated if blank"
+                            placeholderTextColor="#666666"
+                            keyboardType="decimal-pad"
+                        />
+                    </View>
+
                     {/* Calories */}
                     <View style={styles.inputGroup}>
                         <View style={styles.labelRow}>
@@ -157,6 +348,46 @@ export default function LogWorkoutScreen() {
                             placeholder="e.g. 150"
                             placeholderTextColor="#666666"
                             keyboardType="decimal-pad"
+                        />
+                    </View>
+
+                    {/* Avg Heart Rate */}
+                    <View style={styles.inputGroup}>
+                        <View style={styles.labelRow}>
+                            <Ionicons
+                                name="heart-outline"
+                                size={20}
+                                color="#a0a0a0"
+                            />
+                            <Text style={styles.label}>
+                                Avg Heart Rate - BPM (optional)
+                            </Text>
+                        </View>
+                        <TextInput
+                            style={styles.input}
+                            value={avgHeartRate}
+                            onChangeText={setAvgHeartRate}
+                            placeholder="e.g. 130"
+                            placeholderTextColor="#666666"
+                            keyboardType="numeric"
+                        />
+                    </View>
+
+                    {/* Max Heart Rate */}
+                    <View style={styles.inputGroup}>
+                        <View style={styles.labelRow}>
+                            <Ionicons name="heart" size={20} color="#a0a0a0" />
+                            <Text style={styles.label}>
+                                Max Heart Rate - BPM (optional)
+                            </Text>
+                        </View>
+                        <TextInput
+                            style={styles.input}
+                            value={maxHeartRate}
+                            onChangeText={setMaxHeartRate}
+                            placeholder="e.g. 165"
+                            placeholderTextColor="#666666"
+                            keyboardType="numeric"
                         />
                     </View>
 
@@ -240,5 +471,46 @@ const styles = StyleSheet.create({
     textArea: {
         minHeight: 100,
         paddingTop: 14,
+    },
+    durationRow: {
+        flexDirection: "row",
+        gap: 16,
+    },
+    durationInputWrapper: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#1a1a1a",
+        borderRadius: 12,
+        paddingHorizontal: 16,
+    },
+    durationInput: {
+        flex: 1,
+        paddingVertical: 14,
+        fontSize: 16,
+        color: "#ffffff",
+    },
+    durationLabel: {
+        fontSize: 14,
+        color: "#a0a0a0",
+        marginLeft: 8,
+    },
+    dateTimeRow: {
+        flexDirection: "row",
+        gap: 12,
+    },
+    dateTimeButton: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#1a1a1a",
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        gap: 10,
+    },
+    dateTimeButtonText: {
+        fontSize: 14,
+        color: "#ffffff",
     },
 });
