@@ -1,3 +1,4 @@
+import { trackGoals } from "@/lib/goalTracking";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, {
     DateTimePickerEvent,
@@ -134,8 +135,10 @@ export default function WorkoutForm({
 
         setIsSaving(true);
         try {
+            const dateToSave =
+                workoutDate?.toISOString() ?? new Date().toISOString();
             await onSubmit({
-                date: workoutDate?.toISOString(),
+                date: dateToSave,
                 duration: totalDuration,
                 totalSkips: parseInt(totalSkips, 10),
                 avgSkipsPerMinute: avgSkipsPerMinute
@@ -151,6 +154,14 @@ export default function WorkoutForm({
                     : undefined,
                 notes: notes || undefined,
             });
+
+            // Track goals after successful save
+            try {
+                // We await this to ensure logging happens, but since it's local DB it's fast.
+                await trackGoals(dateToSave);
+            } catch (e) {
+                console.error("Failed to track goals:", e);
+            }
         } catch (error) {
             console.error("Failed to save workout:", error);
         } finally {

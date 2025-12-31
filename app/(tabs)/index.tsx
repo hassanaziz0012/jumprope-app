@@ -8,8 +8,10 @@ import {
     type UserProfile,
     type Workout,
 } from "../../lib/database";
+import { getGoalProgress, type GoalProgressItem } from "../../lib/goalTracking";
 import Button from "../components/Button";
 import FloatingActionButton from "../components/FloatingActionButton";
+import GoalTrackingCard from "../components/GoalTrackingCard";
 import WorkoutCard from "../components/WorkoutCard";
 
 export default function HomeScreen() {
@@ -17,6 +19,7 @@ export default function HomeScreen() {
     const insets = useSafeAreaInsets();
     const [user, setUser] = useState<UserProfile | null>(null);
     const [workouts, setWorkouts] = useState<Workout[]>([]);
+    const [goals, setGoals] = useState<GoalProgressItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useFocusEffect(
@@ -27,12 +30,14 @@ export default function HomeScreen() {
 
     const loadData = async () => {
         try {
-            const [profileData, workoutsData] = await Promise.all([
+            const [profileData, workoutsData, goalsData] = await Promise.all([
                 getUserProfile(),
                 getWorkouts(5),
+                getGoalProgress(),
             ]);
             setUser(profileData);
             setWorkouts(workoutsData);
+            setGoals(goalsData);
         } catch (error) {
             console.error("Failed to load data:", error);
         } finally {
@@ -53,65 +58,71 @@ export default function HomeScreen() {
     return (
         <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
             <View style={styles.content}>
-                {/* Header */}
-                <View style={styles.header}>
-                    <Text style={styles.greeting}>{greeting}</Text>
-                    <Text style={styles.subtitle}>
-                        Ready to jump some rope?
-                    </Text>
-                </View>
+                <FlatList
+                    data={workouts}
+                    keyExtractor={(item) => item.id.toString()}
+                    ListHeaderComponent={
+                        <>
+                            {/* Header */}
+                            <View style={styles.header}>
+                                <Text style={styles.greeting}>{greeting}</Text>
+                                <Text style={styles.subtitle}>
+                                    Ready to jump some rope?
+                                </Text>
+                            </View>
 
-                {/* CTA Button */}
-                <Button
-                    title="Log new workout"
-                    onPress={handleLogWorkout}
-                    icon="add-circle"
-                    style={styles.ctaButton}
-                />
+                            {/* CTA Button */}
+                            <Button
+                                title="Log new workout"
+                                onPress={handleLogWorkout}
+                                icon="add-circle"
+                                style={styles.ctaButton}
+                            />
 
-                {/* Recent Workouts */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Recent Workouts</Text>
+                            {/* Goals */}
+                            <GoalTrackingCard goals={goals} />
 
-                    {isLoading ? (
-                        <View style={styles.emptyState}>
-                            <Text style={styles.emptyText}>Loading...</Text>
-                        </View>
-                    ) : workouts.length === 0 ? (
-                        <View style={styles.emptyState}>
-                            <Text style={styles.emptyText}>
-                                No workouts yet
+                            {/* Recent Workouts Title */}
+                            <Text style={styles.sectionTitle}>
+                                Recent Workouts
                             </Text>
-                            <Text style={styles.emptySubtext}>
-                                Log your first workout to get started!
-                            </Text>
-                        </View>
-                    ) : (
-                        <FlatList
-                            data={workouts}
-                            keyExtractor={(item) => item.id.toString()}
-                            renderItem={({ item }) => (
-                                <WorkoutCard
-                                    workout={item}
-                                    onPress={() =>
-                                        router.push(`/workout/${item.id}`)
-                                    }
-                                />
-                            )}
-                            scrollEnabled={false}
-                            ListFooterComponent={
-                                workouts.length > 0 ? (
-                                    <Button
-                                        title="More"
-                                        onPress={handleViewMore}
-                                        variant="ghost"
-                                        icon="chevron-forward"
-                                    />
-                                ) : null
-                            }
+                        </>
+                    }
+                    renderItem={({ item }) => (
+                        <WorkoutCard
+                            workout={item}
+                            onPress={() => router.push(`/workout/${item.id}`)}
                         />
                     )}
-                </View>
+                    ListEmptyComponent={
+                        isLoading ? (
+                            <View style={styles.emptyState}>
+                                <Text style={styles.emptyText}>Loading...</Text>
+                            </View>
+                        ) : (
+                            <View style={styles.emptyState}>
+                                <Text style={styles.emptyText}>
+                                    No workouts yet
+                                </Text>
+                                <Text style={styles.emptySubtext}>
+                                    Log your first workout to get started!
+                                </Text>
+                            </View>
+                        )
+                    }
+                    ListFooterComponent={
+                        !isLoading && workouts.length > 0 ? (
+                            <Button
+                                title="More"
+                                onPress={handleViewMore}
+                                variant="ghost"
+                                icon="chevron-forward"
+                            />
+                        ) : null
+                    }
+                    contentContainerStyle={{ paddingBottom: 80 }} // Add padding for FAB
+                    showsVerticalScrollIndicator={false}
+                />
             </View>
 
             {/* Floating Action Button */}
