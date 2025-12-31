@@ -20,7 +20,7 @@ export default function GoalTrackingCard({ goals }: GoalTrackingCardProps) {
                     <View key={goal.key} style={styles.cardContainer}>
                         <View style={styles.card}>
                             <CircularProgress
-                                size={80}
+                                size={120}
                                 strokeWidth={8}
                                 progress={goal.progress}
                                 color="#ccfa53" // Primary Lime

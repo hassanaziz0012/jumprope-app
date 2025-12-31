@@ -1,5 +1,6 @@
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
+import Svg, { Circle } from "react-native-svg";
 
 interface CircularProgressProps {
     size: number;
@@ -18,8 +19,10 @@ export default function CircularProgress({
     unfilledColor = "#e0e0e0",
     children,
 }: CircularProgressProps) {
+    const radius = (size - strokeWidth) / 2;
+    const circumference = radius * 2 * Math.PI;
     const clampedProgress = Math.min(Math.max(progress, 0), 1);
-    const degrees = clampedProgress * 360;
+    const strokeDashoffset = circumference - clampedProgress * circumference;
 
     return (
         <View
@@ -30,98 +33,40 @@ export default function CircularProgress({
                 alignItems: "center",
             }}
         >
-            {/* Background Circle */}
-            <View
-                style={[
-                    styles.circle,
-                    {
-                        width: size,
-                        height: size,
-                        borderRadius: size / 2,
-                        borderWidth: strokeWidth,
-                        borderColor: unfilledColor,
-                        position: "absolute",
-                    },
-                ]}
-            />
-
-            {/* Progress Arc */}
+            <Svg width={size} height={size} style={{ position: "absolute" }}>
+                {/* Background Circle */}
+                <Circle
+                    cx={size / 2}
+                    cy={size / 2}
+                    r={radius}
+                    stroke={unfilledColor}
+                    strokeWidth={strokeWidth}
+                    fill="transparent"
+                />
+                <Circle
+                    cx={size / 2}
+                    cy={size / 2}
+                    r={radius}
+                    stroke={color}
+                    strokeWidth={strokeWidth}
+                    fill="transparent"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                    rotation="-90"
+                    origin={`${size / 2}, ${size / 2}`}
+                />
+            </Svg>
+            {/* Inner Content */}
             <View
                 style={{
-                    width: size,
-                    height: size,
                     position: "absolute",
-                    transform: [{ rotate: "-90deg" }], // Start from top
+                    justifyContent: "center",
+                    alignItems: "center",
                 }}
             >
-                {/* First Half (0-180 deg) */}
-                <View
-                    style={{
-                        width: size,
-                        height: size,
-                        position: "absolute",
-                        overflow: "hidden",
-                    }}
-                >
-                    <View
-                        style={{
-                            width: size,
-                            height: size,
-                            borderRadius: size / 2,
-                            borderWidth: strokeWidth,
-                            borderColor: color,
-                            borderBottomColor: "transparent",
-                            borderLeftColor: "transparent",
-                            transform: [
-                                {
-                                    rotate:
-                                        degrees > 180
-                                            ? "45deg"
-                                            : `${-135 + degrees}deg`,
-                                },
-                            ],
-                            opacity: degrees > 0 ? 1 : 0,
-                        }}
-                    />
-                </View>
-
-                {/* Second Half (180-360 deg) */}
-                {degrees > 180 && (
-                    <View
-                        style={{
-                            width: size,
-                            height: size,
-                            position: "absolute",
-                            overflow: "hidden",
-                        }}
-                    >
-                        <View
-                            style={{
-                                width: size,
-                                height: size,
-                                borderRadius: size / 2,
-                                borderWidth: strokeWidth,
-                                borderColor: color,
-                                borderBottomColor: "transparent",
-                                borderRightColor: "transparent", // Hide the other side
-                                transform: [
-                                    { rotate: `${-45 + (degrees - 180)}deg` },
-                                ],
-                            }}
-                        />
-                    </View>
-                )}
+                {children}
             </View>
-
-            {/* Inner Content */}
-            <View style={{ position: "absolute" }}>{children}</View>
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    circle: {
-        justifyContent: "center",
-        alignItems: "center",
-    },
-});
