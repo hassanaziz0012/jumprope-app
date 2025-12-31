@@ -27,6 +27,18 @@ export async function initDatabase(): Promise<void> {
       notes TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS goals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      daily_skips INTEGER,
+      weekly_skips INTEGER,
+      weekly_workouts INTEGER,
+      daily_calories INTEGER,
+      weekly_calories INTEGER,
+      weekly_duration INTEGER,
+      skip_rate_goal REAL,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 }
 
@@ -176,6 +188,36 @@ export async function getWorkoutsByDateRange(
     );
 }
 
+// ============ Goals Functions ============
+
+export async function getGoals(): Promise<Goals | null> {
+    const result = await db.getFirstAsync<Goals>("SELECT * FROM goals LIMIT 1");
+    return result ?? null;
+}
+
+export async function updateGoal(
+    goalType: keyof Omit<Goals, "id" | "updated_at">,
+    value: number | null
+): Promise<void> {
+    const existing = await getGoals();
+    if (existing) {
+        await db.runAsync(
+            `UPDATE goals SET ${goalType} = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+            [value, existing.id]
+        );
+    } else {
+        await db.runAsync(`INSERT INTO goals (${goalType}) VALUES (?)`, [
+            value,
+        ]);
+    }
+}
+
+export async function clearGoal(
+    goalType: keyof Omit<Goals, "id" | "updated_at">
+): Promise<void> {
+    await updateGoal(goalType, null);
+}
+
 // ============ Types ============
 
 export interface UserProfile {
@@ -210,6 +252,18 @@ export interface CreateWorkoutInput {
     heartRateAvg?: number;
     heartRateMax?: number;
     notes?: string;
+}
+
+export interface Goals {
+    id: number;
+    daily_skips: number | null;
+    weekly_skips: number | null;
+    weekly_workouts: number | null;
+    daily_calories: number | null;
+    weekly_calories: number | null;
+    weekly_duration: number | null;
+    skip_rate_goal: number | null;
+    updated_at: string;
 }
 
 export { db };
