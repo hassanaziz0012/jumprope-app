@@ -1,9 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { getWorkout, type Workout } from "../../lib/database";
+import { deleteWorkout, getWorkout, type Workout } from "../../lib/database";
+import Button from "../components/Button";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 export default function WorkoutDetailScreen() {
     const router = useRouter();
@@ -11,9 +13,12 @@ export default function WorkoutDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const [workout, setWorkout] = useState<Workout | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const loadWorkout = useCallback(async () => {
         try {
+            setIsLoading(true);
             if (id) {
                 const data = await getWorkout(parseInt(id, 10));
                 setWorkout(data);
@@ -25,9 +30,12 @@ export default function WorkoutDetailScreen() {
         }
     }, [id]);
 
-    useEffect(() => {
-        loadWorkout();
-    }, [loadWorkout]);
+    // Refetch data when screen comes into focus (e.g., after editing)
+    useFocusEffect(
+        useCallback(() => {
+            loadWorkout();
+        }, [loadWorkout])
+    );
 
     const formatDate = (dateString: string): string => {
         const date = new Date(dateString);
@@ -55,6 +63,24 @@ export default function WorkoutDetailScreen() {
         if (remainingSeconds === 0)
             return `${minutes} minute${minutes !== 1 ? "s" : ""}`;
         return `${minutes}m ${remainingSeconds}s`;
+    };
+
+    const handleEdit = () => {
+        router.push(`/workout/edit?id=${id}`);
+    };
+
+    const handleDelete = async () => {
+        if (!id) return;
+        setIsDeleting(true);
+        try {
+            await deleteWorkout(parseInt(id, 10));
+            setShowDeleteModal(false);
+            router.back();
+        } catch (error) {
+            console.error("Failed to delete workout:", error);
+        } finally {
+            setIsDeleting(false);
+        }
     };
 
     if (isLoading) {
@@ -100,7 +126,13 @@ export default function WorkoutDetailScreen() {
                     <Ionicons name="arrow-back" size={24} color="#ffffff" />
                 </Pressable>
                 <Text style={styles.headerTitle}>Workout Details</Text>
-                <View style={styles.headerSpacer} />
+                <Pressable
+                    style={styles.editButton}
+                    onPress={handleEdit}
+                    hitSlop={12}
+                >
+                    <Ionicons name="pencil" size={20} color="#ff5526" />
+                </Pressable>
             </View>
 
             <ScrollView
@@ -133,33 +165,61 @@ export default function WorkoutDetailScreen() {
 
                     <View style={styles.statsRow}>
                         <View style={styles.stat}>
-                            <Text style={styles.statValue}>
-                                {formatDuration(workout.duration)}
-                            </Text>
+                            <View style={styles.statValueRow}>
+                                <Ionicons
+                                    name="time-outline"
+                                    size={20}
+                                    color="#ffffff"
+                                />
+                                <Text style={styles.statValue}>
+                                    {formatDuration(workout.duration)}
+                                </Text>
+                            </View>
                             <Text style={styles.statLabel}>Duration</Text>
                         </View>
 
                         <View style={styles.stat}>
-                            <Text style={styles.statValue}>
-                                {Math.round(workout.avg_skips_per_minute)}
-                            </Text>
+                            <View style={styles.statValueRow}>
+                                <Ionicons
+                                    name="speedometer-outline"
+                                    size={20}
+                                    color="#ffffff"
+                                />
+                                <Text style={styles.statValue}>
+                                    {Math.round(workout.avg_skips_per_minute)}
+                                </Text>
+                            </View>
                             <Text style={styles.statLabel}>Avg Skips/Min</Text>
                         </View>
                     </View>
 
                     <View style={styles.statsRow}>
                         <View style={styles.stat}>
-                            <Text style={styles.statValue}>
-                                {workout.trips}
-                            </Text>
+                            <View style={styles.statValueRow}>
+                                <Ionicons
+                                    name="alert-circle-outline"
+                                    size={20}
+                                    color="#ffffff"
+                                />
+                                <Text style={styles.statValue}>
+                                    {workout.trips}
+                                </Text>
+                            </View>
                             <Text style={styles.statLabel}>Trips</Text>
                         </View>
 
                         {workout.calories && (
                             <View style={styles.stat}>
-                                <Text style={styles.statValue}>
-                                    {Math.round(workout.calories)}
-                                </Text>
+                                <View style={styles.statValueRow}>
+                                    <Ionicons
+                                        name="flame-outline"
+                                        size={20}
+                                        color="#ffffff"
+                                    />
+                                    <Text style={styles.statValue}>
+                                        {Math.round(workout.calories)}
+                                    </Text>
+                                </View>
                                 <Text style={styles.statLabel}>Calories</Text>
                             </View>
                         )}
@@ -214,7 +274,30 @@ export default function WorkoutDetailScreen() {
                         <Text style={styles.notes}>{workout.notes}</Text>
                     </View>
                 )}
+
+                {/* Delete Button */}
+                <View style={styles.deleteSection}>
+                    <Button
+                        title="Delete Workout"
+                        onPress={() => setShowDeleteModal(true)}
+                        variant="secondary"
+                        icon="trash-outline"
+                        style={styles.deleteButton}
+                    />
+                </View>
             </ScrollView>
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmationModal
+                visible={showDeleteModal}
+                title="Delete Workout"
+                message="Are you sure you want to delete this workout? This action cannot be undone."
+                confirmText={isDeleting ? "Deleting..." : "Delete"}
+                cancelText="Cancel"
+                onConfirm={handleDelete}
+                onCancel={() => setShowDeleteModal(false)}
+                isDestructive
+            />
         </View>
     );
 }
@@ -243,8 +326,11 @@ const styles = StyleSheet.create({
         color: "#ffffff",
         textAlign: "center",
     },
-    headerSpacer: {
+    editButton: {
         width: 44,
+        height: 44,
+        justifyContent: "center",
+        alignItems: "flex-end",
     },
     content: {
         flex: 1,
@@ -343,6 +429,11 @@ const styles = StyleSheet.create({
         color: "#666666",
         marginTop: 4,
     },
+    statValueRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+    },
     card: {
         backgroundColor: "#1a1a1a",
         borderRadius: 16,
@@ -364,5 +455,14 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#a0a0a0",
         lineHeight: 22,
+    },
+    deleteSection: {
+        marginTop: 24,
+        paddingTop: 24,
+        borderTopWidth: 1,
+        borderTopColor: "#2a2a2a",
+    },
+    deleteButton: {
+        borderColor: "#dc3545",
     },
 });
