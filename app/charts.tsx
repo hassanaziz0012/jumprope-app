@@ -18,15 +18,22 @@ import {
     METRICS,
     TimeRange,
 } from "../lib/charts";
-import { Chart, getCharts } from "../lib/database";
+import { Chart, deleteChart, getCharts } from "../lib/database";
 import AddChartModal from "./components/AddChartModal";
+import AreaChart from "./components/AreaChart";
 import BarChart from "./components/BarChart";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 // Screen padding (20*2) + Card padding (16*2) = 72
 const CHART_WIDTH = SCREEN_WIDTH - 72;
 
-const ChartItem = ({ chart }: { chart: Chart }) => {
+const ChartItem = ({
+    chart,
+    onDelete,
+}: {
+    chart: Chart;
+    onDelete: () => void;
+}) => {
     const [data, setData] = useState<ChartDataPoint[]>([]);
 
     useEffect(() => {
@@ -61,12 +68,25 @@ const ChartItem = ({ chart }: { chart: Chart }) => {
                 <Text style={styles.chartTitle}>
                     {formatTitle(chart.metric)}
                 </Text>
-                <Text style={styles.chartSubtitle}>
-                    {chart.time_range.toUpperCase()}
-                </Text>
+                <View style={styles.chartMeta}>
+                    <Text style={styles.chartSubtitle}>
+                        {chart.time_range.toUpperCase()}
+                    </Text>
+                    <Pressable
+                        onPress={onDelete}
+                        style={styles.deleteButton}
+                        hitSlop={8}
+                    >
+                        <Ionicons name="close" size={16} color="#666666" />
+                    </Pressable>
+                </View>
             </View>
             <View>
-                <BarChart data={data} width={CHART_WIDTH} height={200} />
+                {chart.type === "area" ? (
+                    <AreaChart data={data} width={CHART_WIDTH} height={200} />
+                ) : (
+                    <BarChart data={data} width={CHART_WIDTH} height={200} />
+                )}
             </View>
         </View>
     );
@@ -125,7 +145,14 @@ export default function ChartsScreen() {
 
                     <View style={styles.chartsList}>
                         {charts.map((chart) => (
-                            <ChartItem key={chart.id} chart={chart} />
+                            <ChartItem
+                                key={chart.id}
+                                chart={chart}
+                                onDelete={async () => {
+                                    await deleteChart(chart.id);
+                                    loadCharts();
+                                }}
+                            />
                         ))}
                     </View>
                 </ScrollView>
@@ -225,6 +252,16 @@ const styles = StyleSheet.create({
         color: "#a0a0a0",
         fontSize: 12,
         fontWeight: "500",
+    },
+    chartMeta: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+    },
+    deleteButton: {
+        padding: 4,
+        backgroundColor: "#2a2a2a",
+        borderRadius: 12,
     },
 
     // Button styles
