@@ -1,47 +1,53 @@
 {
-  "cli": {
-    "version": ">= 16.28.0",
-    "appVersionSource": "remote"
-  },
-  "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal",
-      "android": {
-        "image": "latest"
-      },
-      "ios": {
-        "image": "latest"
-      }
+    "cli": {
+        "version": ">= 16.28.0",
+        "appVersionSource": "remote"
     },
-    "development-simulator": {
-      "extends": "development",
-      "ios": {
-        "simulator": true
-      }
+    "build": {
+        "development": {
+            "developmentClient": true,
+            "distribution": "internal",
+            "android": {
+                "image": "latest"
+            },
+            "ios": {
+                "image": "latest"
+            }
+        },
+        "development-simulator": {
+            "extends": "development",
+            "ios": {
+                "simulator": true
+            }
+        },
+        "preview": {
+            "distribution": "internal",
+            "channel": "main",
+            "android": {
+                "image": "latest"
+            },
+            "ios": {
+                "image": "latest"
+            }
+        },
+        "apk": {
+            "extends": "preview",
+            "android": {
+                "buildType": "apk"
+            }
+        },
+        "production": {
+            "channel": "production",
+            "autoIncrement": true,
+            "android": {
+                "image": "latest"
+            },
+            "ios": {
+                "image": "latest"
+            }
+        }
     },
-    "preview": {
-      "distribution": "internal",
-      "channel": "main",
-      "android": {
-        "image": "latest"
-      },
-      "ios": {
-        "image": "latest"
-      }
-    },
-    "production": {
-      "channel": "production",
-      "autoIncrement": true,
-      "android": {
-        "image": "latest"
-      },
-      "ios": {
-        "image": "latest"
-      }
+    "submit": {
+        "production": {}
     }
-  },
-  "submit": {
-    "production": {}
-  }
 }
