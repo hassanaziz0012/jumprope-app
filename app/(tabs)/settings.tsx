@@ -90,6 +90,12 @@ export default function SettingsScreen() {
                         />
                         <View style={styles.separator} />
                         <SettingsItem
+                            icon="bar-chart-outline"
+                            title="Charts"
+                            onPress={() => router.push("/charts")}
+                        />
+                        <View style={styles.separator} />
+                        <SettingsItem
                             icon="color-palette-outline"
                             title="Theme"
                             variant="custom"
