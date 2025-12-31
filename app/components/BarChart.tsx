@@ -19,7 +19,7 @@ interface BarChartProps {
 
 const BarChart: React.FC<BarChartProps> = ({
     data = [],
-    barWidth = 22,
+    barWidth = 14,
     height = 200,
     width,
     barBorderRadius = 4,
@@ -38,26 +38,31 @@ const BarChart: React.FC<BarChartProps> = ({
         frontColor: item.frontColor || defaultFrontColor,
     }));
 
+    const Y_AXIS_WIDTH = 50;
+    const chartWidth = width ? width - Y_AXIS_WIDTH : undefined;
+
     return (
         <View style={styles.container}>
             <GiftedBarChart
                 data={processedData}
                 barWidth={barWidth}
                 height={height}
-                width={width} // If undefined, it takes full width
+                width={chartWidth} // If undefined, it takes full width
                 barBorderRadius={barBorderRadius}
                 frontColor={defaultFrontColor}
                 yAxisThickness={0}
                 xAxisThickness={1}
                 xAxisColor="#333333"
                 yAxisTextStyle={{ color: "#a0a0a0", fontSize: 12 }}
+                yAxisLabelWidth={Y_AXIS_WIDTH}
                 xAxisLabelTextStyle={{ color: "#a0a0a0", fontSize: 12 }}
                 noOfSections={noOfSections}
                 maxValue={maxValue}
-                initialSpacing={10}
+                initialSpacing={2}
                 // Adjusting layout for dark mode
                 rulesColor="#333333"
                 rulesType="solid"
+                scrollToEnd
             />
         </View>
     );

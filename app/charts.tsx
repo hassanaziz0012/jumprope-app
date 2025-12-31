@@ -207,6 +207,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 16,
         marginBottom: 8,
+        overflow: "hidden",
     },
     chartHeader: {
         flexDirection: "row",
