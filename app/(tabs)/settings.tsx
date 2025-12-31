@@ -11,22 +11,16 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-    getUserProfile,
-    updateUserTheme,
-    type UserProfile,
-} from "../../lib/database";
+import { getUserProfile, type UserProfile } from "../../lib/database";
 import { aboutLinks } from "../../lib/social";
 import ProfileCard from "../components/ProfileCard";
 import SettingsItem from "../components/SettingsItem";
-
-type ThemeOption = "light" | "dark" | "system";
 
 export default function SettingsScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const [user, setUser] = useState<UserProfile | null>(null);
-    const [theme, setTheme] = useState<ThemeOption>("system");
+
     const [shareModalVisible, setShareModalVisible] = useState(false);
     const [aboutModalVisible, setAboutModalVisible] = useState(false);
 
@@ -39,14 +33,6 @@ export default function SettingsScreen() {
     const loadProfile = async () => {
         const profile = await getUserProfile();
         setUser(profile);
-        if (profile?.theme) {
-            setTheme(profile.theme as ThemeOption);
-        }
-    };
-
-    const handleThemeChange = async (newTheme: ThemeOption) => {
-        setTheme(newTheme);
-        await updateUserTheme(newTheme);
     };
 
     const handleProfilePress = () => {
@@ -68,8 +54,6 @@ export default function SettingsScreen() {
     const handleAboutPress = () => {
         setAboutModalVisible(true);
     };
-
-    const themeDisplayValue = theme.charAt(0).toUpperCase() + theme.slice(1);
 
     return (
         <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
@@ -106,41 +90,6 @@ export default function SettingsScreen() {
                             title="Charts"
                             onPress={() => router.push("/charts")}
                         />
-                        <View style={styles.separator} />
-                        <SettingsItem
-                            icon="color-palette-outline"
-                            title="Theme"
-                            variant="custom"
-                        >
-                            <View style={styles.themeSelector}>
-                                {(
-                                    ["light", "dark", "system"] as ThemeOption[]
-                                ).map((option) => (
-                                    <Pressable
-                                        key={option}
-                                        style={[
-                                            styles.themeOption,
-                                            theme === option &&
-                                                styles.themeOptionActive,
-                                        ]}
-                                        onPress={() =>
-                                            handleThemeChange(option)
-                                        }
-                                    >
-                                        <Text
-                                            style={[
-                                                styles.themeOptionText,
-                                                theme === option &&
-                                                    styles.themeOptionTextActive,
-                                            ]}
-                                        >
-                                            {option.charAt(0).toUpperCase() +
-                                                option.slice(1)}
-                                        </Text>
-                                    </Pressable>
-                                ))}
-                            </View>
-                        </SettingsItem>
                     </View>
                 </View>
 
@@ -313,28 +262,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#2a2a2a",
         marginLeft: 60,
     },
-    themeSelector: {
-        flexDirection: "row",
-        backgroundColor: "#2a2a2a",
-        borderRadius: 8,
-        padding: 2,
-    },
-    themeOption: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 6,
-    },
-    themeOptionActive: {
-        backgroundColor: "#ff5526",
-    },
-    themeOptionText: {
-        fontSize: 13,
-        fontWeight: "500",
-        color: "#a0a0a0",
-    },
-    themeOptionTextActive: {
-        color: "#ffffff",
-    },
+
     modalOverlay: {
         flex: 1,
         backgroundColor: "rgba(0, 0, 0, 0.8)",
