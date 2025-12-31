@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { DayStreakData } from "../../lib/streaks";
 import WeeklyStreak from "./WeeklyStreak";
 
@@ -7,15 +7,17 @@ interface StreakCardProps {
     currentStreak: number;
     weeklyData: DayStreakData[];
     onDayPress: (day: DayStreakData) => void;
+    onPress?: () => void;
 }
 
 export default function StreakCard({
     currentStreak,
     weeklyData,
     onDayPress,
+    onPress,
 }: StreakCardProps) {
     return (
-        <View style={styles.card}>
+        <Pressable style={styles.card} onPress={onPress}>
             {/* Current Streak Display */}
             <View style={styles.currentStreak}>
                 <View style={styles.flameContainer}>
@@ -29,11 +31,14 @@ export default function StreakCard({
             <View style={styles.divider} />
 
             {/* Weekly Streak */}
-            <View style={styles.weeklySection}>
+            <Pressable
+                style={styles.weeklySection}
+                onPress={(e) => e.stopPropagation()}
+            >
                 <Text style={styles.weeklyTitle}>This Week</Text>
                 <WeeklyStreak data={weeklyData} onDayPress={onDayPress} />
-            </View>
-        </View>
+            </Pressable>
+        </Pressable>
     );
 }
 

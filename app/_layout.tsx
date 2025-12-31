@@ -50,6 +50,12 @@ export default function RootLayout() {
                     }}
                 />
                 <Stack.Screen
+                    name="streak-history"
+                    options={{
+                        headerShown: false,
+                    }}
+                />
+                <Stack.Screen
                     name="workout/[id]"
                     options={{
                         headerShown: false,

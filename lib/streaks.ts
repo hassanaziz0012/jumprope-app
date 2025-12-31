@@ -204,3 +204,63 @@ export async function getWeeklyStreakData(): Promise<DayStreakData[]> {
 
     return weekData;
 }
+
+/**
+ * Returns detailed day-by-day streak data for a specific month.
+ * @param year The year (e.g., 2025)
+ * @param month The month (0-11, where 0 = January)
+ */
+export async function getMonthlyStreakData(
+    year: number,
+    month: number
+): Promise<DayStreakData[]> {
+    const today = new Date();
+    const todayStr = toYYYYMMDD(today);
+
+    // Get the first day of the month
+    const firstDay = new Date(year, month, 1);
+    // Get the last day of the month
+    const lastDay = new Date(year, month + 1, 0);
+
+    const firstDayStr = toYYYYMMDD(firstDay);
+    const lastDayStr = toYYYYMMDD(lastDay);
+
+    // Fetch workouts and rest days for this month
+    const workouts = await getWorkoutsByDateRange(
+        firstDayStr,
+        lastDayStr + "T23:59:59"
+    );
+    const restDays = await getRestDays(firstDayStr, lastDayStr);
+
+    // Create a set of workout dates
+    const workoutDates = new Set<string>();
+    workouts.forEach((w) => {
+        workoutDates.add(toYYYYMMDD(new Date(w.date)));
+    });
+
+    // Create a set of rest day dates
+    const restDayDates = new Set<string>(restDays);
+
+    const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const monthData: DayStreakData[] = [];
+
+    // Get number of days in the month
+    const daysInMonth = lastDay.getDate();
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const dateStr = toYYYYMMDD(date);
+
+        monthData.push({
+            date,
+            dateStr,
+            dayLabel: dayLabels[date.getDay()],
+            hasWorkout: workoutDates.has(dateStr),
+            isRestDay: restDayDates.has(dateStr),
+            isToday: dateStr === todayStr,
+            isFuture: date > today,
+        });
+    }
+
+    return monthData;
+}

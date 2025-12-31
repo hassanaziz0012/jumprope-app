@@ -96,6 +96,10 @@ export default function HomeScreen() {
         setIsRestDayModalVisible(true);
     };
 
+    const handleStreakCardPress = () => {
+        router.push("/streak-history");
+    };
+
     const handleMarkRestDay = async () => {
         if (!selectedDay) return;
         await addRestDay(selectedDay.dateStr);
@@ -150,6 +154,7 @@ export default function HomeScreen() {
                                 currentStreak={currentStreak}
                                 weeklyData={weeklyData}
                                 onDayPress={handleDayPress}
+                                onPress={handleStreakCardPress}
                             />
 
                             {/* Goals */}
