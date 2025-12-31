@@ -225,6 +225,13 @@ export async function deleteWorkout(id: number): Promise<void> {
     await db.runAsync("DELETE FROM workout WHERE id = ?", [id]);
 }
 
+// Used for export
+export async function getAllWorkouts(): Promise<Workout[]> {
+    return await db.getAllAsync<Workout>(
+        "SELECT * FROM workout ORDER BY date DESC"
+    );
+}
+
 export async function getWorkouts(limit = 50): Promise<Workout[]> {
     return await db.getAllAsync<Workout>(
         "SELECT * FROM workout ORDER BY date DESC LIMIT ?",
