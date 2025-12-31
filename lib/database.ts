@@ -39,7 +39,52 @@ export async function initDatabase(): Promise<void> {
       skip_rate_goal REAL,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS rest_days (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date TEXT NOT NULL UNIQUE,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
   `);
+}
+
+// ============ Rest Days Functions ============
+
+export async function addRestDay(date: string): Promise<void> {
+    try {
+        await db.runAsync("INSERT INTO rest_days (date) VALUES (?)", [date]);
+    } catch (e) {
+        // Ignore unique constraint violations (duplicate dates)
+        console.log("Rest day already exists or other error:", e);
+    }
+}
+
+export async function removeRestDay(date: string): Promise<void> {
+    await db.runAsync("DELETE FROM rest_days WHERE date = ?", [date]);
+}
+
+export async function getRestDays(
+    startDate?: string,
+    endDate?: string
+): Promise<string[]> {
+    let query = "SELECT date FROM rest_days";
+    const params: string[] = [];
+
+    if (startDate && endDate) {
+        query += " WHERE date >= ? AND date <= ?";
+        params.push(startDate, endDate);
+    } else if (startDate) {
+        query += " WHERE date >= ?";
+        params.push(startDate);
+    } else if (endDate) {
+        query += " WHERE date <= ?";
+        params.push(endDate);
+    }
+
+    query += " ORDER BY date ASC";
+
+    const results = await db.getAllAsync<{ date: string }>(query, params);
+    return results.map((r) => r.date);
 }
 
 // ============ User Profile Functions ============
