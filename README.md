@@ -1,65 +1,126 @@
-# Welcome to your Expo app 👋
+# Jumprope Tracker
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A minimal, offline-first mobile app for tracking your jump rope workouts. Log your sessions, visualize your progress, maintain workout streaks, and crush your fitness goals.
 
-## Get started
+## Overview
 
-To start the app, in your terminal run:
+A couple months ago, I started using a jumprope to improve my cardio and lose some weight. It's the most fun cardio I've ever done. But being the geek that I am, I also wanted to track my progress and see how I was doing. So I built this app.
 
-```bash
-npm run start
-```
+I designed this app with a couple simple rules in mind:
 
-In the output, you'll find options to open the app in:
+-   **Offline-first**: All your data stays on your device. No accounts, no cloud sync, no subscriptions.
+-   **Minimal & focused**: One thing, done exceptionally well.
+-   **Delightful UX**: Because if the UX isn't satisfying, I know I won't use it consistently.
 
-- [a development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [an Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [an iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Features
 
-## Workflows
+### Workout Logging
 
-This project is configured to use [EAS Workflows](https://docs.expo.dev/eas/workflows/get-started/) to automate some development and release processes. These commands are set up in [`package.json`](./package.json) and can be run using NPM scripts in your terminal.
+Track everything about your jump rope sessions:
 
-### Previews
+-   **Duration**: How long you jumped
+-   **Total Skips**: Your full skip count
+-   **Avg Skips/Min**: Automatically calculated from your duration and skips
+-   **Trips**: Track interruptions or misses
+-   **Calories**: Estimated calories burned (optional)
+-   **Heart Rate**: Average and max BPM (optional)
+-   **Notes**: Add context to your workouts
 
-Run `npm run draft` to [publish a preview update](https://docs.expo.dev/eas/workflows/examples/publish-preview-update/) of your project, which can be viewed in Expo Go or in a development build.
+I should note that logging workout data is manual right now. It works for me. But it would be trivial to add a CSV or JSON import feature as well.
 
-### Development Builds
+<!-- Screenshot: workout logging screen -->
 
-Run `npm run development-builds` to [create a development build](https://docs.expo.dev/eas/workflows/examples/create-development-builds/). Note - you'll need to follow the [Prerequisites](https://docs.expo.dev/eas/workflows/examples/create-development-builds/#prerequisites) to ensure you have the correct emulator setup on your machine.
+---
 
-### Production Deployments
+### Goal Tracking
 
-Run `npm run deploy` to [deploy to production](https://docs.expo.dev/eas/workflows/examples/deploy-to-production/). Note - you'll need to follow the [Prerequisites](https://docs.expo.dev/eas/workflows/examples/deploy-to-production/#prerequisites) to ensure you're set up to submit to the Apple and Google stores.
+Set personal targets and stay motivated:
 
-## Hosting
+-   **Daily or Weekly Goals**: Choose what works for your routine
+-   **Multiple Goals**: Track skips, calories, duration, or workout count simultaneously
+-   **Progress Visualization**: See how close you are to hitting your targets
+-   **Automatic Resets**: Daily goals reset at midnight, weekly goals reset on Monday
 
-Expo offers hosting for websites and API functions via EAS Hosting. See the [Getting Started](https://docs.expo.dev/eas/hosting/get-started/) guide to learn more.
+<!-- Screenshot: goals screen -->
 
+---
 
-## Get a fresh project
+### Streak Tracking
 
-When you're ready, run:
+Build consistency with workout streaks:
 
-```bash
-npm run reset-project
-```
+-   **Consecutive Day Tracking**: See how many days in a row you've worked out
+-   **Rest Days**: Mark planned recovery days to preserve your streak
+-   **Streak Counter**: A visual reminder of your dedication on the home screen
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+<!-- Screenshot: streak counter -->
 
-## Learn more
+---
 
-To learn more about developing your project with Expo, look at the following resources:
+### Charts & Stats
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Visualize your performance over time:
 
-## Join the community
+-   **Multiple Chart Types**: Bar, line, and area charts
+-   **Flexible Time Ranges**: View the last 7 days, 30 days, or 90 days
+-   **Key Metrics**: Track skips, calories, duration, skip rate, and more
+-   **Lifetime Stats**: See your total workouts, highest skips, longest duration, and best skip rate
 
-Join our community of developers creating universal apps.
+<!-- Screenshot: charts page -->
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+### Workout Sharing
+
+Share your progress with friends:
+
+-   **Shareable Cards**: Generate beautiful workout summary cards
+-   **Share Anywhere**: Post to Instagram, Twitter, WhatsApp, or any other app
+-   **No Watermarks**: Clean, branded cards without intrusive branding
+-   **Lifetime**: Share your lifetime stats with a beautiful card
+
+<!-- Screenshot: share card -->
+
+---
+
+### Data Export
+
+I wanted to be able to export data cleanly so I can process it in other apps or whatever.
+
+And besides, your data belongs to you:
+
+-   **CSV & JSON Export**: Download all your workout data
+-   **Easy Backup**: Save to Files, email to yourself, or upload to cloud storage
+
+---
+
+### Perma-Dark Mode
+
+Easy on the eyes. I'm not a fan of light mode.
+
+---
+
+## Getting Started
+
+~~1. Download Jumprope Tracker from the App Store or Google Play~~
+
+1. Go to the Releases page and download the latest APK file, and install it on your phone.
+
+    > [!NOTE]
+    > I haven't published this app to the Play Store yet, so you'll need to install it manually. I'm gonna put it on the play store soon, so don't worry. :)
+
+2. Add your profile information (optional, but recommended; like I said, all data is stored locally.)
+3. Log your first workout and start building your streak!
+
+---
+
+## About the Author
+
+I'm a freelance developer who builds web and mobile apps for people. This is a side project of mine, built only because of my new jumprope hobby.
+
+-   [Twitter/X](https://x.com/nothassanaziz)
+-   [YouTube](https://youtube.com/@itshassanaziz)
+-   [GitHub](https://github.com/hassanaziz0012)
+-   [Website](https://www.hassandev.me)
