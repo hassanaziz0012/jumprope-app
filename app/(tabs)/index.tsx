@@ -4,9 +4,11 @@ import { FlatList, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
     addRestDay,
+    getCharts,
     getUserProfile,
     getWorkouts,
     removeRestDay,
+    type Chart,
     type UserProfile,
     type Workout,
 } from "../../lib/database";
@@ -17,6 +19,7 @@ import {
     type DayStreakData,
 } from "../../lib/streaks";
 import Button from "../components/Button";
+import ChartDisplay from "../components/ChartDisplay";
 import FloatingActionButton from "../components/FloatingActionButton";
 import GoalTrackingCard from "../components/GoalTrackingCard";
 import RestDayModal from "../components/RestDayModal";
@@ -29,6 +32,7 @@ export default function HomeScreen() {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [workouts, setWorkouts] = useState<Workout[]>([]);
     const [goals, setGoals] = useState<GoalProgressItem[]>([]);
+    const [charts, setCharts] = useState<Chart[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     // Streak state
@@ -51,18 +55,21 @@ export default function HomeScreen() {
                 goalsData,
                 streakData,
                 weeklyStreakData,
+                chartData,
             ] = await Promise.all([
                 getUserProfile(),
                 getWorkouts(5),
                 getGoalProgress(),
                 getCurrentStreak(),
                 getWeeklyStreakData(),
+                getCharts(),
             ]);
             setUser(profileData);
             setWorkouts(workoutsData);
             setGoals(goalsData);
             setCurrentStreak(streakData);
             setWeeklyData(weeklyStreakData);
+            setCharts(chartData);
         } catch (error) {
             console.error("Failed to load data:", error);
         } finally {
@@ -159,6 +166,16 @@ export default function HomeScreen() {
 
                             {/* Goals */}
                             <GoalTrackingCard goals={goals} />
+
+                            {/* Charts */}
+                            {charts.map((chart) => (
+                                <View
+                                    key={chart.id}
+                                    style={{ marginTop: 24, marginBottom: 8 }}
+                                >
+                                    <ChartDisplay chart={chart} />
+                                </View>
+                            ))}
 
                             {/* Recent Workouts Title */}
                             <Text style={styles.sectionTitle}>

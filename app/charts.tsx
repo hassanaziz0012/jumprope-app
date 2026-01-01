@@ -1,9 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
     ActivityIndicator,
-    Dimensions,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -11,86 +10,9 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-    ChartDataPoint,
-    getChartData,
-    Metric,
-    METRICS,
-    TimeRange,
-} from "../lib/charts";
 import { Chart, deleteChart, getCharts } from "../lib/database";
 import AddChartModal from "./components/AddChartModal";
-import AreaChart from "./components/AreaChart";
-import BarChart from "./components/BarChart";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-// Screen padding (20*2) + Card padding (16*2) = 72
-const CHART_WIDTH = SCREEN_WIDTH - 72;
-
-const ChartItem = ({
-    chart,
-    onDelete,
-}: {
-    chart: Chart;
-    onDelete: () => void;
-}) => {
-    const [data, setData] = useState<ChartDataPoint[]>([]);
-
-    useEffect(() => {
-        const loadData = async () => {
-            const chartData = await getChartData(
-                chart.metric as Metric,
-                chart.time_range as TimeRange
-            );
-            setData(chartData);
-        };
-        loadData();
-    }, [chart]);
-
-    // Format title: "Metric"
-    const formatTitle = (metric: string) => {
-        // Pretty print metric
-        let metricName = metric;
-        if (Object.values(METRICS).includes(metric as any)) {
-            // Find key for this value? Or just format the string
-            // e.g. "totalSkips" -> "Total Skips"
-            metricName = metric
-                .replace(/([A-Z])/g, " $1")
-                .replace(/^./, (str) => str.toUpperCase());
-        }
-
-        return metricName;
-    };
-
-    return (
-        <View style={styles.chartCard}>
-            <View style={styles.chartHeader}>
-                <Text style={styles.chartTitle}>
-                    {formatTitle(chart.metric)}
-                </Text>
-                <View style={styles.chartMeta}>
-                    <Text style={styles.chartSubtitle}>
-                        {chart.time_range.toUpperCase()}
-                    </Text>
-                    <Pressable
-                        onPress={onDelete}
-                        style={styles.deleteButton}
-                        hitSlop={8}
-                    >
-                        <Ionicons name="close" size={16} color="#666666" />
-                    </Pressable>
-                </View>
-            </View>
-            <View>
-                {chart.type === "area" ? (
-                    <AreaChart data={data} width={CHART_WIDTH} height={200} />
-                ) : (
-                    <BarChart data={data} width={CHART_WIDTH} height={200} />
-                )}
-            </View>
-        </View>
-    );
-};
+import ChartDisplay from "./components/ChartDisplay";
 
 export default function ChartsScreen() {
     const insets = useSafeAreaInsets();
@@ -145,7 +67,7 @@ export default function ChartsScreen() {
 
                     <View style={styles.chartsList}>
                         {charts.map((chart) => (
-                            <ChartItem
+                            <ChartDisplay
                                 key={chart.id}
                                 chart={chart}
                                 onDelete={async () => {
@@ -228,40 +150,6 @@ const styles = StyleSheet.create({
     chartsList: {
         gap: 20,
         marginTop: 20,
-    },
-    chartCard: {
-        backgroundColor: "#1a1a1a",
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 8,
-        overflow: "hidden",
-    },
-    chartHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 16,
-    },
-    chartTitle: {
-        color: "#ffffff",
-        fontSize: 18,
-        fontWeight: "600",
-        textTransform: "capitalize",
-    },
-    chartSubtitle: {
-        color: "#a0a0a0",
-        fontSize: 12,
-        fontWeight: "500",
-    },
-    chartMeta: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-    },
-    deleteButton: {
-        padding: 4,
-        backgroundColor: "#2a2a2a",
-        borderRadius: 12,
     },
 
     // Button styles
