@@ -1,11 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import * as Sharing from "expo-sharing";
+import { useCallback, useRef, useState } from "react";
+import {
+    Modal,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { captureRef } from "react-native-view-shot";
 import { deleteWorkout, getWorkout, type Workout } from "../../lib/database";
 import Button from "../components/Button";
 import ConfirmationModal from "../components/ConfirmationModal";
+import ShareableWorkoutCard from "../components/ShareableWorkoutCard";
 
 export default function WorkoutDetailScreen() {
     const router = useRouter();
@@ -15,6 +25,9 @@ export default function WorkoutDetailScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [isSharing, setIsSharing] = useState(false);
+    const cardRef = useRef<View>(null);
 
     const loadWorkout = useCallback(async () => {
         try {
@@ -83,6 +96,23 @@ export default function WorkoutDetailScreen() {
         }
     };
 
+    const handleShare = async () => {
+        setIsSharing(true);
+        try {
+            const uri = await captureRef(cardRef, {
+                format: "png",
+                quality: 1,
+            });
+            await Sharing.shareAsync(uri);
+            // Optional: Close modal after successful share initiation
+            // setShowShareModal(false);
+        } catch (error) {
+            console.error("Failed to share workout:", error);
+        } finally {
+            setIsSharing(false);
+        }
+    };
+
     if (isLoading) {
         return (
             <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
@@ -126,13 +156,26 @@ export default function WorkoutDetailScreen() {
                     <Ionicons name="arrow-back" size={24} color="#ffffff" />
                 </Pressable>
                 <Text style={styles.headerTitle}>Workout Details</Text>
-                <Pressable
-                    style={styles.editButton}
-                    onPress={handleEdit}
-                    hitSlop={12}
-                >
-                    <Ionicons name="pencil" size={20} color="#ff5526" />
-                </Pressable>
+                <View style={styles.headerActions}>
+                    <Pressable
+                        style={styles.iconButton}
+                        onPress={() => setShowShareModal(true)}
+                        hitSlop={12}
+                    >
+                        <Ionicons
+                            name="share-outline"
+                            size={22}
+                            color="#ccfa53"
+                        />
+                    </Pressable>
+                    <Pressable
+                        style={styles.iconButton}
+                        onPress={handleEdit}
+                        hitSlop={12}
+                    >
+                        <Ionicons name="pencil" size={22} color="#ff5526" />
+                    </Pressable>
+                </View>
             </View>
 
             <ScrollView
@@ -287,6 +330,54 @@ export default function WorkoutDetailScreen() {
                 </View>
             </ScrollView>
 
+            {/* Share Modal */}
+            <Modal
+                visible={showShareModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowShareModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Share Workout</Text>
+                            <Pressable
+                                onPress={() => setShowShareModal(false)}
+                                hitSlop={12}
+                            >
+                                <Ionicons
+                                    name="close"
+                                    size={24}
+                                    color="#ffffff"
+                                />
+                            </Pressable>
+                        </View>
+
+                        <View style={styles.previewContainer}>
+                            <View
+                                ref={cardRef}
+                                collapsable={false}
+                                style={styles.cardCaptureContainer}
+                            >
+                                <ShareableWorkoutCard workout={workout} />
+                            </View>
+                        </View>
+
+                        <View style={styles.modalActions}>
+                            <Button
+                                title={
+                                    isSharing ? "Preparing..." : "Share Workout"
+                                }
+                                onPress={handleShare}
+                                icon={isSharing ? undefined : "share-outline"}
+                                style={styles.shareButton}
+                                disabled={isSharing}
+                            />
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
             {/* Delete Confirmation Modal */}
             <ConfirmationModal
                 visible={showDeleteModal}
@@ -326,12 +417,18 @@ const styles = StyleSheet.create({
         color: "#ffffff",
         textAlign: "center",
     },
-    editButton: {
+    headerActions: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+    },
+    iconButton: {
         width: 44,
         height: 44,
         justifyContent: "center",
-        alignItems: "flex-end",
+        alignItems: "center",
     },
+    // editButton: { ... } -> Replaced by iconButton class above for consistency
     content: {
         flex: 1,
     },
@@ -464,5 +561,51 @@ const styles = StyleSheet.create({
     },
     deleteButton: {
         borderColor: "#dc3545",
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+    },
+    modalContent: {
+        width: "100%",
+        maxWidth: 400,
+        backgroundColor: "#1a1a1a",
+        borderRadius: 24,
+        padding: 24,
+        alignItems: "center",
+    },
+    modalHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        width: "100%",
+        marginBottom: 24,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: "700",
+        color: "#ffffff",
+    },
+    previewContainer: {
+        marginBottom: 32,
+        borderRadius: 20,
+        overflow: "hidden",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.5,
+        shadowRadius: 20,
+        elevation: 10,
+    },
+    cardCaptureContainer: {
+        backgroundColor: "#1a1a1a", // Ensure background for capture
+    },
+    modalActions: {
+        width: "100%",
+    },
+    shareButton: {
+        backgroundColor: "#ff5526",
     },
 });
