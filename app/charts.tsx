@@ -5,7 +5,6 @@ import {
     ActivityIndicator,
     Dimensions,
     Pressable,
-    ScrollView,
     StyleSheet,
     Text,
     View,
@@ -18,7 +17,7 @@ import {
     METRICS,
     TimeRange,
 } from "../lib/charts";
-import { Chart, deleteChart, getCharts } from "../lib/database";
+import { Chart, getCharts } from "../lib/database";
 import AddChartModal from "./components/AddChartModal";
 import AreaChart from "./components/AreaChart";
 import BarChart from "./components/BarChart";
@@ -126,52 +125,55 @@ export default function ChartsScreen() {
                 <Text style={styles.title}>Charts</Text>
             </View>
 
-            {loading ? (
+            {
+                // loading ?
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#ccfa53" />
                 </View>
-            ) : hasCharts ? (
-                <ScrollView
-                    contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}
-                >
-                    <Pressable
-                        style={[styles.button, styles.buttonCompact]}
-                        onPress={() => setModalVisible(true)}
-                    >
-                        <Ionicons name="add" size={24} color="#000000" />
-                        <Text style={styles.buttonText}>Add chart</Text>
-                    </Pressable>
+            }
+            {/* // ) : hasCharts ? (
+                // <></>
+            //     <ScrollView
+            //         contentContainerStyle={styles.scrollContent}
+            //         showsVerticalScrollIndicator={false}
+            //     >
+            //         <Pressable
+            //             style={[styles.button, styles.buttonCompact]}
+            //             onPress={() => setModalVisible(true)}
+            //         >
+            //             <Ionicons name="add" size={24} color="#000000" />
+            //             <Text style={styles.buttonText}>Add chart</Text>
+            //         </Pressable>
 
-                    <View style={styles.chartsList}>
-                        {charts.map((chart) => (
-                            <ChartItem
-                                key={chart.id}
-                                chart={chart}
-                                onDelete={async () => {
-                                    await deleteChart(chart.id);
-                                    loadCharts();
-                                }}
-                            />
-                        ))}
-                    </View>
-                </ScrollView>
-            ) : (
-                <View style={styles.emptyContent}>
-                    <Text style={styles.helperText}>
-                        Create custom charts here to track your performance
-                        across workouts.
-                    </Text>
+            //         <View style={styles.chartsList}>
+            //             {charts.map((chart) => (
+            //                 <ChartItem
+            //                     key={chart.id}
+            //                     chart={chart}
+            //                     onDelete={async () => {
+            //                         await deleteChart(chart.id);
+            //                         loadCharts();
+            //                     }}
+            //                 />
+            //             ))}
+            //         </View>
+            //     </ScrollView>
+            // ) : (
+            //     <View style={styles.emptyContent}>
+            //         <Text style={styles.helperText}>
+            //             Create custom charts here to track your performance
+            //             across workouts.
+            //         </Text>
 
-                    <Pressable
-                        style={styles.button}
-                        onPress={() => setModalVisible(true)}
-                    >
-                        <Ionicons name="add" size={24} color="#000000" />
-                        <Text style={styles.buttonText}>Add chart</Text>
-                    </Pressable>
-                </View>
-            )}
+            //         <Pressable
+            //             style={styles.button}
+            //             onPress={() => setModalVisible(true)}
+            //         >
+            //             <Ionicons name="add" size={24} color="#000000" />
+            //             <Text style={styles.buttonText}>Add chart</Text>
+            //         </Pressable>
+            //     </View>
+            // )} */}
 
             <AddChartModal
                 visible={modalVisible}
