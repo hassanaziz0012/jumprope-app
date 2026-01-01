@@ -12,8 +12,6 @@ I designed this app with a couple simple rules in mind:
 -   **Minimal & focused**: One thing, done exceptionally well.
 -   **Delightful UX**: Because if the UX isn't satisfying, I know I won't use it consistently.
 
----
-
 ## Features
 
 ### Workout Logging
@@ -32,8 +30,6 @@ I should note that logging workout data is manual right now. It works for me. Bu
 
 <!-- Screenshot: workout logging screen -->
 
----
-
 ### Goal Tracking
 
 Set personal targets and stay motivated:
@@ -45,8 +41,6 @@ Set personal targets and stay motivated:
 
 <!-- Screenshot: goals screen -->
 
----
-
 ### Streak Tracking
 
 Build consistency with workout streaks:
@@ -56,8 +50,6 @@ Build consistency with workout streaks:
 -   **Streak Counter**: A visual reminder of your dedication on the home screen
 
 <!-- Screenshot: streak counter -->
-
----
 
 ### Charts & Stats
 
@@ -70,8 +62,6 @@ Visualize your performance over time:
 
 <!-- Screenshot: charts page -->
 
----
-
 ### Workout Sharing
 
 Share your progress with friends:
@@ -83,8 +73,6 @@ Share your progress with friends:
 
 <!-- Screenshot: share card -->
 
----
-
 ### Data Export
 
 I wanted to be able to export data cleanly so I can process it in other apps or whatever.
@@ -94,13 +82,9 @@ And besides, your data belongs to you:
 -   **CSV & JSON Export**: Download all your workout data
 -   **Easy Backup**: Save to Files, email to yourself, or upload to cloud storage
 
----
-
 ### Perma-Dark Mode
 
 Easy on the eyes. I'm not a fan of light mode.
-
----
 
 ## Getting Started
 
@@ -113,8 +97,6 @@ Easy on the eyes. I'm not a fan of light mode.
 
 2. Add your profile information (optional, but recommended; like I said, all data is stored locally.)
 3. Log your first workout and start building your streak!
-
----
 
 ## About the Author
 
