@@ -48,7 +48,7 @@
                 "expo-build-properties",
                 {
                     "android": {
-                        "extraProguardRules": "-keep class com.horcrux.svg.** { *; }"
+                        "extraProguardRules": "-keep public class com.horcrux.svg.** { *; } -keep class com.facebook.react.viewmanagers.** { *; } -keep class com.facebook.react.module.model.ReactModuleInfoProvider { *; }"
                     }
                 }
             ]
