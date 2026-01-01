@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Directory, File, Paths } from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -68,10 +69,37 @@ export default function ProfileScreen() {
 
         setIsSaving(true);
         try {
+            let finalImageUri = imageUri;
+
+            if (imageUri) {
+                // Check if the image needs to be moved to permanent storage
+                // We do this by checking if it is already in our persistent folder
+                const targetDir = new Directory(
+                    Paths.document,
+                    "profile_images"
+                );
+                if (!targetDir.exists) {
+                    targetDir.create();
+                }
+
+                // If it's not in the target directory, copy it there
+                // We use a simple string check for efficiency/safety, or we could compare directories
+                if (!imageUri.includes(targetDir.uri)) {
+                    const filename = `${Date.now()}-${Paths.basename(
+                        imageUri
+                    )}`;
+                    const sourceFile = new File(imageUri);
+                    const destFile = new File(targetDir, filename);
+
+                    sourceFile.copy(destFile);
+                    finalImageUri = destFile.uri;
+                }
+            }
+
             await saveUserProfile(
                 name.trim(),
                 email.trim() || undefined,
-                imageUri || undefined
+                finalImageUri || undefined
             );
             router.back();
         } catch (error) {
