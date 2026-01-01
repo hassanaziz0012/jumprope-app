@@ -213,10 +213,10 @@ export async function getAllWorkouts(): Promise<Workout[]> {
     );
 }
 
-export async function getWorkouts(limit = 50): Promise<Workout[]> {
+export async function getWorkouts(limit = 50, offset = 0): Promise<Workout[]> {
     return await db.getAllAsync<Workout>(
-        "SELECT * FROM workout ORDER BY date DESC LIMIT ?",
-        [limit]
+        "SELECT * FROM workout ORDER BY date DESC LIMIT ? OFFSET ?",
+        [limit, offset]
     );
 }
 

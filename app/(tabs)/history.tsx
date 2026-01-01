@@ -1,15 +1,25 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import {
+    ActivityIndicator,
+    FlatList,
+    StyleSheet,
+    Text,
+    View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getWorkouts, type Workout } from "../../lib/database";
 import WorkoutCard from "../components/WorkoutCard";
+
+const pageSize = 50;
 
 export default function HistoryScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const [workouts, setWorkouts] = useState<Workout[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
 
     useFocusEffect(
         useCallback(() => {
@@ -19,12 +29,34 @@ export default function HistoryScreen() {
 
     const loadWorkouts = async () => {
         try {
-            const data = await getWorkouts();
+            setIsLoading(true);
+            const data = await getWorkouts(pageSize, 0);
             setWorkouts(data);
+            setHasMore(data.length === pageSize);
         } catch (error) {
             console.error("Failed to load workouts:", error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const loadMoreWorkouts = async () => {
+        if (!hasMore || isFetchingMore || isLoading) return;
+
+        try {
+            setIsFetchingMore(true);
+            const currentCount = workouts.length;
+            const data = await getWorkouts(pageSize, currentCount);
+
+            if (data.length < pageSize) {
+                setHasMore(false);
+            }
+
+            setWorkouts((prev) => [...prev, ...data]);
+        } catch (error) {
+            console.error("Failed to load more workouts:", error);
+        } finally {
+            setIsFetchingMore(false);
         }
     };
 
@@ -68,6 +100,18 @@ export default function HistoryScreen() {
                     )}
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
+                    onEndReached={loadMoreWorkouts}
+                    onEndReachedThreshold={0.5}
+                    ListFooterComponent={
+                        isFetchingMore ? (
+                            <View style={styles.loaderFooter}>
+                                <ActivityIndicator
+                                    size="small"
+                                    color="#ffffff"
+                                />
+                            </View>
+                        ) : null
+                    }
                 />
             )}
         </View>
@@ -113,5 +157,9 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#666666",
         textAlign: "center",
+    },
+    loaderFooter: {
+        paddingVertical: 20,
+        alignItems: "center",
     },
 });
