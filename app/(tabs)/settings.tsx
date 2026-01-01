@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import * as Sharing from "expo-sharing";
+import { useCallback, useRef, useState } from "react";
 import {
+    ActivityIndicator,
     Linking,
     Modal,
     Pressable,
@@ -11,10 +13,18 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { getUserProfile, type UserProfile } from "../../lib/database";
+import { captureRef } from "react-native-view-shot";
+import {
+    getAllWorkouts,
+    getUserProfile,
+    type UserProfile,
+} from "../../lib/database";
 import { aboutLinks } from "../../lib/social";
 import ProfileCard from "../components/ProfileCard";
 import SettingsItem from "../components/SettingsItem";
+import ShareableLifetimeCard, {
+    type LifetimeStats,
+} from "../components/ShareableLifetimeCard";
 
 export default function SettingsScreen() {
     const router = useRouter();
@@ -23,6 +33,10 @@ export default function SettingsScreen() {
 
     const [shareModalVisible, setShareModalVisible] = useState(false);
     const [aboutModalVisible, setAboutModalVisible] = useState(false);
+
+    const [stats, setStats] = useState<LifetimeStats | null>(null);
+    const [loadingStats, setLoadingStats] = useState(false);
+    const cardRef = useRef<View>(null);
 
     useFocusEffect(
         useCallback(() => {
@@ -47,8 +61,54 @@ export default function SettingsScreen() {
         router.push("/export");
     };
 
-    const handleSharePress = () => {
+    const handleSharePress = async () => {
         setShareModalVisible(true);
+        setLoadingStats(true);
+        try {
+            const workouts = await getAllWorkouts();
+            if (workouts.length > 0) {
+                const totalWorkouts = workouts.length;
+                const maxSkips = Math.max(
+                    ...workouts.map((w) => w.total_skips)
+                );
+                const maxAvgSkips = Math.max(
+                    ...workouts.map((w) => w.avg_skips_per_minute)
+                );
+                const maxDuration = Math.max(
+                    ...workouts.map((w) => w.duration)
+                );
+
+                setStats({
+                    totalWorkouts,
+                    maxSkips,
+                    maxAvgSkips,
+                    maxDuration,
+                });
+            } else {
+                setStats({
+                    totalWorkouts: 0,
+                    maxSkips: 0,
+                    maxAvgSkips: 0,
+                    maxDuration: 0,
+                });
+            }
+        } catch (error) {
+            console.error("Error calculating stats:", error);
+        } finally {
+            setLoadingStats(false);
+        }
+    };
+
+    const handleShareContent = async () => {
+        try {
+            const uri = await captureRef(cardRef, {
+                format: "png",
+                quality: 1,
+            });
+            await Sharing.shareAsync(uri);
+        } catch (error) {
+            console.error("Error sharing:", error);
+        }
     };
 
     const handleAboutPress = () => {
@@ -130,15 +190,48 @@ export default function SettingsScreen() {
                     onPress={() => setShareModalVisible(false)}
                 >
                     <View style={styles.modalContent}>
-                        <Ionicons
-                            name="share-social"
-                            size={48}
-                            color="#ff5526"
-                        />
-                        <Text style={styles.modalTitle}>Share</Text>
-                        <Text style={styles.modalSubtitle}>
-                            Share options coming soon!
-                        </Text>
+                        {loadingStats ? (
+                            <ActivityIndicator
+                                size="large"
+                                color="#ff5526"
+                                style={styles.loader}
+                            />
+                        ) : stats ? (
+                            <View style={styles.shareContainer}>
+                                <View
+                                    ref={cardRef}
+                                    style={styles.cardContainer}
+                                    collapsable={false}
+                                >
+                                    <ShareableLifetimeCard stats={stats} />
+                                </View>
+                                <Pressable
+                                    style={styles.shareButton}
+                                    onPress={handleShareContent}
+                                >
+                                    <Text style={styles.shareButtonText}>
+                                        Share
+                                    </Text>
+                                    <Ionicons
+                                        name="share-outline"
+                                        size={20}
+                                        color="#ffffff"
+                                    />
+                                </Pressable>
+                            </View>
+                        ) : (
+                            <>
+                                <Ionicons
+                                    name="share-social"
+                                    size={48}
+                                    color="#ff5526"
+                                />
+                                <Text style={styles.modalTitle}>Share</Text>
+                                <Text style={styles.modalSubtitle}>
+                                    No workouts found to share.
+                                </Text>
+                            </>
+                        )}
                         <Pressable
                             style={styles.modalCloseButton}
                             onPress={() => setShareModalVisible(false)}
@@ -320,5 +413,32 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         justifyContent: "center",
         alignItems: "center",
+    },
+    shareContainer: {
+        alignItems: "center",
+        width: "100%",
+    },
+    cardContainer: {
+        width: "100%",
+        marginBottom: 24,
+    },
+    shareButton: {
+        backgroundColor: "#ff5526",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 14,
+        paddingHorizontal: 32,
+        borderRadius: 12,
+        gap: 8,
+        width: "100%",
+    },
+    shareButtonText: {
+        fontSize: 16,
+        fontWeight: "700",
+        color: "#ffffff",
+    },
+    loader: {
+        marginVertical: 40,
     },
 });
