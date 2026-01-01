@@ -74,7 +74,6 @@ const AreaChart: React.FC<AreaChartProps> = ({
                 hideDataPoints={false}
                 dataPointsColor={color}
                 dataPointsRadius={3}
-                scrollToEnd
             />
         </View>
     );

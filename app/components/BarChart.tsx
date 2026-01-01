@@ -62,7 +62,6 @@ const BarChart: React.FC<BarChartProps> = ({
                 // Adjusting layout for dark mode
                 rulesColor="#333333"
                 rulesType="solid"
-                scrollToEnd
             />
         </View>
     );

@@ -43,7 +43,15 @@
                 }
             ],
             "expo-sqlite",
-            "@react-native-community/datetimepicker"
+            "@react-native-community/datetimepicker",
+            [
+                "expo-build-properties",
+                {
+                    "android": {
+                        "extraProguardRules": "-keep class com.horcrux.svg.** { *; }"
+                    }
+                }
+            ]
         ],
         "experiments": {
             "typedRoutes": true,
