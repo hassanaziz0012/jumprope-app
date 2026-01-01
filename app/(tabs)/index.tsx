@@ -202,7 +202,6 @@ export default function HomeScreen() {
                     showsVerticalScrollIndicator={false}
                 />
             </View>
-
             {/* Floating Action Button */}
             <FloatingActionButton onPress={handleLogWorkout} />
 
