@@ -33,8 +33,7 @@ Track everything about your jump rope sessions:
 I should note that logging workout data is manual right now. It works for me. But it would be trivial to add a CSV or JSON import feature as well.
 
 <p float="left">
-  <img src="assets/app-demo-images/add-workout.jpg" width="300" />
-  <img src="assets/app-demo-images/workout-details.jpg" width="300" /> 
+  <img src="assets/app-demo-images/log-workouts-thumbnail" />
 </p>
 
 ### Goal Tracking
