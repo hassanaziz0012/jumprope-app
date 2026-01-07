@@ -13,7 +13,7 @@ I designed this app with a couple simple rules in mind:
 -   **Delightful UX**: Because if the UX isn't satisfying, I know I won't use it consistently.
 
 <p float="left">
-  <img src="assets/app-demo-images/project-main-image.png" /> 
+  <img src="assets/app-demo-images/project-main-thumbnail.png" /> 
 </p>
 
 ## Features
@@ -46,8 +46,7 @@ Set personal targets and stay motivated:
 -   **Automatic Resets**: Daily goals reset at midnight, weekly goals reset on Monday
 
 <p float="left">
-  <img src="assets/app-demo-images/goals-page.jpg" width="300" />
-  <img src="assets/app-demo-images/home-goals.jpg" width="300" /> 
+  <img src="assets/app-demo-images/goal-tracking-thumbnail.png" />
 </p>
 
 ### Streak Tracking
