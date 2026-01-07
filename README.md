@@ -12,6 +12,11 @@ I designed this app with a couple simple rules in mind:
 -   **Minimal & focused**: One thing, done exceptionally well.
 -   **Delightful UX**: Because if the UX isn't satisfying, I know I won't use it consistently.
 
+<p float="left">
+  <img src="assets/app-demo-images/home.jpg" width="300" />
+  <img src="assets/app-demo-images/home-recent-workouts.jpg" width="300" /> 
+</p>
+
 ## Features
 
 ### Workout Logging
@@ -28,7 +33,10 @@ Track everything about your jump rope sessions:
 
 I should note that logging workout data is manual right now. It works for me. But it would be trivial to add a CSV or JSON import feature as well.
 
-<!-- Screenshot: workout logging screen -->
+<p float="left">
+  <img src="assets/app-demo-images/add-workout.jpg" width="300" />
+  <img src="assets/app-demo-images/workout-details.jpg" width="300" /> 
+</p>
 
 ### Goal Tracking
 
@@ -39,7 +47,10 @@ Set personal targets and stay motivated:
 -   **Progress Visualization**: See how close you are to hitting your targets
 -   **Automatic Resets**: Daily goals reset at midnight, weekly goals reset on Monday
 
-<!-- Screenshot: goals screen -->
+<p float="left">
+  <img src="assets/app-demo-images/goals-page.jpg" width="300" />
+  <img src="assets/app-demo-images/home-goals.jpg" width="300" /> 
+</p>
 
 ### Streak Tracking
 
@@ -49,7 +60,7 @@ Build consistency with workout streaks:
 -   **Rest Days**: Mark planned recovery days to preserve your streak
 -   **Streak Counter**: A visual reminder of your dedication on the home screen
 
-<!-- Screenshot: streak counter -->
+<img src="assets/app-demo-images/streak-page.jpg" width="300" />
 
 ### Charts & Stats
 
@@ -60,7 +71,7 @@ Visualize your performance over time:
 -   **Key Metrics**: Track skips, calories, duration, skip rate, and more
 -   **Lifetime Stats**: See your total workouts, highest skips, longest duration, and best skip rate
 
-<!-- Screenshot: charts page -->
+<img src="assets/app-demo-images/charts-page.jpg" width="300" />
 
 ### Workout Sharing
 
@@ -71,7 +82,10 @@ Share your progress with friends:
 -   **No Watermarks**: Clean, branded cards without intrusive branding
 -   **Lifetime**: Share your lifetime stats with a beautiful card
 
-<!-- Screenshot: share card -->
+<p float="left">
+  <img src="assets/app-demo-images/share-workout.jpg" width="300" />
+  <img src="assets/app-demo-images/share-lifetime-stats.jpg" width="300" /> 
+</p>
 
 ### Data Export
 
@@ -81,6 +95,8 @@ And besides, your data belongs to you:
 
 -   **CSV & JSON Export**: Download all your workout data
 -   **Easy Backup**: Save to Files, email to yourself, or upload to cloud storage
+
+<img src="assets/app-demo-images/export-data.jpg" width="300" />
 
 ### Perma-Dark Mode
 
