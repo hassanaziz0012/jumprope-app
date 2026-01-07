@@ -57,7 +57,7 @@ Build consistency with workout streaks:
 -   **Rest Days**: Mark planned recovery days to preserve your streak
 -   **Streak Counter**: A visual reminder of your dedication on the home screen
 
-<img src="assets/app-demo-images/streak-page.jpg" width="300" />
+<img src="assets/app-demo-images/streaks-thumbnail.png" />
 
 ### Charts & Stats
 
@@ -67,8 +67,6 @@ Visualize your performance over time:
 -   **Flexible Time Ranges**: View the last 7 days, 30 days, or 90 days
 -   **Key Metrics**: Track skips, calories, duration, skip rate, and more
 -   **Lifetime Stats**: See your total workouts, highest skips, longest duration, and best skip rate
-
-<img src="assets/app-demo-images/charts-page.jpg" width="300" />
 
 ### Workout Sharing
 
@@ -91,8 +89,6 @@ And besides, your data belongs to you:
 
 -   **CSV & JSON Export**: Download all your workout data
 -   **Easy Backup**: Save to Files, email to yourself, or upload to cloud storage
-
-<img src="assets/app-demo-images/export-data.jpg" width="300" />
 
 ### Perma-Dark Mode
 
