@@ -13,7 +13,7 @@ I designed this app with a couple simple rules in mind:
 -   **Delightful UX**: Because if the UX isn't satisfying, I know I won't use it consistently.
 
 <p float="left">
-  <img src="assets/app-demo-images/project-main-image.jpg" /> 
+  <img src="assets/app-demo-images/project-main-image.png" /> 
 </p>
 
 ## Features
