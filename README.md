@@ -80,8 +80,7 @@ Share your progress with friends:
 -   **Lifetime**: Share your lifetime stats with a beautiful card
 
 <p float="left">
-  <img src="assets/app-demo-images/share-workout.jpg" width="300" />
-  <img src="assets/app-demo-images/share-lifetime-stats.jpg" width="300" /> 
+  <img src="assets/app-demo-images/share-cards-thumbnail.png" />
 </p>
 
 ### Data Export
