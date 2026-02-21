@@ -45,6 +45,23 @@
             "expo-sqlite",
             "@react-native-community/datetimepicker",
             [
+                "react-native-android-widget",
+                {
+                    "widgets": [
+                        {
+                            "name": "LogWorkoutWidget",
+                            "label": "Log Workout",
+                            "description": "Quickly log a jumprope workout",
+                            "minWidth": "110dp",
+                            "minHeight": "50dp",
+                            "targetCellWidth": 2,
+                            "targetCellHeight": 1,
+                            "resizeMode": "horizontal|vertical"
+                        }
+                    ]
+                }
+            ],
+            [
                 "expo-build-properties",
                 {
                     "android": {
