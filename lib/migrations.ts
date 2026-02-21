@@ -1,0 +1,49 @@
+import * as SQLite from "expo-sqlite";
+
+// Array of migration functions. Index in the array corresponds to the database version
+// it targets.
+// e.g., index 0 = Version 1 migration (moving from Version 0 to Version 1)
+const MIGRATIONS = [
+    // Version 1: Add ai_enabled to user_profile
+    async (db: SQLite.SQLiteDatabase) => {
+        const userInfo = await db.getAllAsync<{ name: string }>(
+            "PRAGMA table_info(user_profile)"
+        );
+        if (!userInfo.some((col) => col.name === "ai_enabled")) {
+            await db.execAsync(
+                "ALTER TABLE user_profile ADD COLUMN ai_enabled INTEGER DEFAULT 0;"
+            );
+        }
+    },
+];
+
+export async function runMigrations(db: SQLite.SQLiteDatabase) {
+    try {
+        let response = await db.getFirstAsync<{ user_version: number }>(
+            "PRAGMA user_version"
+        );
+        let currentDbVersion = response?.user_version ?? 0;
+
+        if (currentDbVersion >= MIGRATIONS.length) {
+            console.log("Database is up to date");
+            return;
+        }
+
+        console.log(
+            `Running database migrations from version ${currentDbVersion} to ${MIGRATIONS.length}...`
+        );
+
+        // Run all pending migrations sequentially
+        for (let i = currentDbVersion; i < MIGRATIONS.length; i++) {
+            console.log(`Applying migration ${i + 1}...`);
+            await MIGRATIONS[i](db);
+        }
+
+        // Update the database version to match the number of migrations applied
+        await db.execAsync(`PRAGMA user_version = ${MIGRATIONS.length}`);
+        console.log("Database migrations completed successfully");
+    } catch (e) {
+        console.error("Error migrating database:", e);
+        throw e;
+    }
+}

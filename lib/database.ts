@@ -1,4 +1,5 @@
 import * as SQLite from "expo-sqlite";
+import { runMigrations } from "./migrations";
 
 // Open (or create) the database
 const db = SQLite.openDatabaseSync("jumprope.db");
@@ -11,7 +12,7 @@ export async function initDatabase(): Promise<void> {
       name TEXT NOT NULL,
       email TEXT,
       image TEXT,
-
+      ai_enabled INTEGER DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -55,6 +56,9 @@ export async function initDatabase(): Promise<void> {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+    // Run database migrations
+    await runMigrations(db);
 }
 
 // ============ Rest Days Functions ============
@@ -99,27 +103,44 @@ export async function getRestDays(
 // ============ User Profile Functions ============
 
 export async function getUserProfile(): Promise<UserProfile | null> {
-    const result = await db.getFirstAsync<UserProfile>(
+    const result = await db.getFirstAsync<any>(
         "SELECT * FROM user_profile LIMIT 1"
     );
-    return result ?? null;
+    if (!result) return null;
+    return {
+        ...result,
+        ai_enabled: Boolean(result.ai_enabled),
+    } as UserProfile;
 }
 
 export async function saveUserProfile(
     name: string,
     email?: string,
-    image?: string
+    image?: string,
+    aiEnabled?: boolean
 ): Promise<void> {
     const existing = await getUserProfile();
     if (existing) {
         await db.runAsync(
-            "UPDATE user_profile SET name = ?, email = ?, image = ? WHERE id = ?",
-            [name, email ?? null, image ?? null, existing.id]
+            "UPDATE user_profile SET name = ?, email = ?, image = ?, ai_enabled = ? WHERE id = ?",
+            [
+                name,
+                email ?? null,
+                image ?? null,
+                aiEnabled !== undefined
+                    ? aiEnabled
+                        ? 1
+                        : 0
+                    : existing.ai_enabled
+                    ? 1
+                    : 0,
+                existing.id,
+            ]
         );
     } else {
         await db.runAsync(
-            "INSERT INTO user_profile (name, email, image) VALUES (?, ?, ?)",
-            [name, email ?? null, image ?? null]
+            "INSERT INTO user_profile (name, email, image, ai_enabled) VALUES (?, ?, ?, ?)",
+            [name, email ?? null, image ?? null, aiEnabled ? 1 : 0]
         );
     }
 }
@@ -303,7 +324,7 @@ export interface UserProfile {
     name: string;
     email: string | null;
     image: string | null;
-
+    ai_enabled: boolean;
     created_at: string;
 }
 

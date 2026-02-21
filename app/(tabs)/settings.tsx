@@ -9,6 +9,7 @@ import {
     Pressable,
     ScrollView,
     StyleSheet,
+    Switch,
     Text,
     View,
 } from "react-native";
@@ -25,6 +26,8 @@ import SettingsItem from "../components/SettingsItem";
 import ShareableLifetimeCard, {
     type LifetimeStats,
 } from "../components/ShareableLifetimeCard";
+import AIConsentModal from "../components/AIConsentModal";
+import { saveUserProfile } from "../../lib/database";
 
 export default function SettingsScreen() {
     const router = useRouter();
@@ -33,6 +36,7 @@ export default function SettingsScreen() {
 
     const [shareModalVisible, setShareModalVisible] = useState(false);
     const [aboutModalVisible, setAboutModalVisible] = useState(false);
+    const [aiModalVisible, setAiModalVisible] = useState(false);
 
     const [stats, setStats] = useState<LifetimeStats | null>(null);
     const [loadingStats, setLoadingStats] = useState(false);
@@ -115,6 +119,25 @@ export default function SettingsScreen() {
         setAboutModalVisible(true);
     };
 
+    const handleAIToggle = async (value: boolean) => {
+        if (value) {
+            setAiModalVisible(true);
+        } else {
+            if (user) {
+                await saveUserProfile(user.name, user.email || undefined, user.image || undefined, false);
+                await loadProfile();
+            }
+        }
+    };
+
+    const handleAIConsent = async () => {
+        if (user) {
+            await saveUserProfile(user.name, user.email || undefined, user.image || undefined, true);
+            await loadProfile();
+        }
+        setAiModalVisible(false);
+    };
+
     return (
         <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
             <ScrollView
@@ -133,6 +156,25 @@ export default function SettingsScreen() {
                         imageUri={user?.image}
                         onPress={handleProfilePress}
                     />
+                </View>
+
+                {/* AI Section */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>AI Tools</Text>
+                    <View style={styles.settingsGroup}>
+                        <SettingsItem
+                            icon="sparkles-outline"
+                            title="Turn on AI features"
+                            variant="custom"
+                        >
+                            <Switch
+                                value={user?.ai_enabled || false}
+                                onValueChange={handleAIToggle}
+                                trackColor={{ false: "#333", true: "#ff5526" }}
+                                thumbColor="#ffffff"
+                            />
+                        </SettingsItem>
+                    </View>
                 </View>
 
                 {/* Preferences Section */}
@@ -308,6 +350,13 @@ export default function SettingsScreen() {
                     </View>
                 </Pressable>
             </Modal>
+
+            {/* AI Consent Modal */}
+            <AIConsentModal
+                visible={aiModalVisible}
+                onCancel={() => setAiModalVisible(false)}
+                onConsent={handleAIConsent}
+            />
         </View>
     );
 }
