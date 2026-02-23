@@ -13,6 +13,7 @@ export async function initDatabase(): Promise<void> {
       email TEXT,
       image TEXT,
       ai_enabled INTEGER DEFAULT 0,
+      synced INTEGER DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -27,6 +28,7 @@ export async function initDatabase(): Promise<void> {
       heart_rate_avg INTEGER,
       heart_rate_max INTEGER,
       notes TEXT,
+      synced INTEGER DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -39,12 +41,14 @@ export async function initDatabase(): Promise<void> {
       weekly_calories INTEGER,
       weekly_duration INTEGER,
       skip_rate_goal REAL,
+      synced INTEGER DEFAULT 0,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS rest_days (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       date TEXT NOT NULL UNIQUE,
+      synced INTEGER DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -53,6 +57,7 @@ export async function initDatabase(): Promise<void> {
       metric TEXT NOT NULL,
       time_range TEXT NOT NULL,
       type TEXT NOT NULL,
+      synced INTEGER DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -100,6 +105,17 @@ export async function getRestDays(
     return results.map((r) => r.date);
 }
 
+export async function getUnsyncedRestDays(): Promise<string[]> {
+    const results = await db.getAllAsync<{ date: string }>("SELECT date FROM rest_days WHERE synced = 0 ORDER BY date ASC");
+    return results.map((r) => r.date);
+}
+
+export async function markRestDaysAsSynced(dates: string[]): Promise<void> {
+    if (dates.length === 0) return;
+    const placeholders = dates.map(() => '?').join(',');
+    await db.runAsync(`UPDATE rest_days SET synced = 1 WHERE date IN (${placeholders})`, dates);
+}
+
 // ============ User Profile Functions ============
 
 export async function getUserProfile(): Promise<UserProfile | null> {
@@ -122,7 +138,7 @@ export async function saveUserProfile(
     const existing = await getUserProfile();
     if (existing) {
         await db.runAsync(
-            "UPDATE user_profile SET name = ?, email = ?, image = ?, ai_enabled = ? WHERE id = ?",
+            "UPDATE user_profile SET name = ?, email = ?, image = ?, ai_enabled = ?, synced = 0 WHERE id = ?",
             [
                 name,
                 email ?? null,
@@ -206,7 +222,7 @@ export async function updateWorkout(
     await db.runAsync(
         `UPDATE workout SET 
             date = ?, duration = ?, total_skips = ?, avg_skips_per_minute = ?, 
-            trips = ?, calories = ?, heart_rate_avg = ?, heart_rate_max = ?, notes = ?
+            trips = ?, calories = ?, heart_rate_avg = ?, heart_rate_max = ?, notes = ?, synced = 0
          WHERE id = ?`,
         [
             updated.date,
@@ -270,6 +286,18 @@ export async function getWorkoutsByDateRange(
     );
 }
 
+export async function getUnsyncedWorkouts(): Promise<Workout[]> {
+    return await db.getAllAsync<Workout>(
+        "SELECT * FROM workout WHERE synced = 0 ORDER BY date DESC"
+    );
+}
+
+export async function markWorkoutsAsSynced(ids: number[]): Promise<void> {
+    if (ids.length === 0) return;
+    const placeholders = ids.map(() => '?').join(',');
+    await db.runAsync(`UPDATE workout SET synced = 1 WHERE id IN (${placeholders})`, ids);
+}
+
 // ============ Goals Functions ============
 
 export async function getGoals(): Promise<Goals | null> {
@@ -284,7 +312,7 @@ export async function updateGoal(
     const existing = await getGoals();
     if (existing) {
         await db.runAsync(
-            `UPDATE goals SET ${goalType} = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+            `UPDATE goals SET ${goalType} = ?, updated_at = CURRENT_TIMESTAMP, synced = 0 WHERE id = ?`,
             [value, existing.id]
         );
     } else {
@@ -298,6 +326,15 @@ export async function clearGoal(
     goalType: keyof Omit<Goals, "id" | "updated_at">
 ): Promise<void> {
     await updateGoal(goalType, null);
+}
+
+export async function getUnsyncedGoals(): Promise<Goals | null> {
+    const result = await db.getFirstAsync<Goals>("SELECT * FROM goals WHERE synced = 0 LIMIT 1");
+    return result ?? null;
+}
+
+export async function markGoalAsSynced(id: number): Promise<void> {
+    await db.runAsync("UPDATE goals SET synced = 1 WHERE id = ?", [id]);
 }
 
 // ============ Charts Functions ============
@@ -317,6 +354,16 @@ export async function deleteChart(id: number): Promise<void> {
     await db.runAsync("DELETE FROM charts WHERE id = ?", [id]);
 }
 
+export async function getUnsyncedCharts(): Promise<Chart[]> {
+    return await db.getAllAsync<Chart>("SELECT * FROM charts WHERE synced = 0 ORDER BY id DESC");
+}
+
+export async function markChartsAsSynced(ids: number[]): Promise<void> {
+    if (ids.length === 0) return;
+    const placeholders = ids.map(() => '?').join(',');
+    await db.runAsync(`UPDATE charts SET synced = 1 WHERE id IN (${placeholders})`, ids);
+}
+
 // ============ Types ============
 
 export interface UserProfile {
@@ -325,6 +372,7 @@ export interface UserProfile {
     email: string | null;
     image: string | null;
     ai_enabled: boolean;
+    synced: number;
     created_at: string;
 }
 
@@ -339,6 +387,7 @@ export interface Workout {
     heart_rate_avg: number | null;
     heart_rate_max: number | null;
     notes: string | null;
+    synced: number;
     created_at: string;
 }
 
@@ -363,6 +412,7 @@ export interface Goals {
     weekly_calories: number | null;
     weekly_duration: number | null;
     skip_rate_goal: number | null;
+    synced: number;
     updated_at: string;
 }
 
@@ -371,6 +421,7 @@ export interface Chart {
     metric: string;
     time_range: string;
     type: string;
+    synced: number;
     created_at: string;
 }
 

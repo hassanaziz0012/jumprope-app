@@ -15,6 +15,20 @@ const MIGRATIONS = [
             );
         }
     },
+    // Version 2: Add synced to all tables
+    async (db: SQLite.SQLiteDatabase) => {
+        const tables = ["user_profile", "workout", "goals", "rest_days", "charts"];
+        for (const table of tables) {
+            const tableInfo = await db.getAllAsync<{ name: string }>(
+                `PRAGMA table_info(${table})`
+            );
+            if (!tableInfo.some((col) => col.name === "synced")) {
+                await db.execAsync(
+                    `ALTER TABLE ${table} ADD COLUMN synced INTEGER DEFAULT 0;`
+                );
+            }
+        }
+    },
 ];
 
 export async function runMigrations(db: SQLite.SQLiteDatabase) {
