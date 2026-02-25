@@ -8,10 +8,12 @@ import {
     markRestDaysAsSynced,
     getUnsyncedCharts,
     markChartsAsSynced,
+    setLastSync,
 } from "./database";
+import { setSyncState } from "./syncState";
 
 // Define the API URL for the backend
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "https://jumprope-tracker-api.vercel.app";
+const API_URL = "https://jumprope-api.vercel.app";
 
 /**
  * Synchronize all workouts to the backend API.
@@ -178,5 +180,27 @@ export async function syncCharts() {
         console.log("Charts synced successfully.");
     } catch (error) {
         console.error("Error syncing charts:", error);
+    }
+}
+
+/**
+ * Run all synchronization operations.
+ */
+export async function runSync() {
+    console.log("Starting full sync...");
+    setSyncState(true, "SYNCING...");
+    try {
+        await syncWorkouts();
+        await syncGoals();
+        await syncRestDays();
+        await syncCharts();
+        await setLastSync(new Date().toISOString());
+        console.log("Full sync completed.");
+        setSyncState(false, "Sync Completed!");
+        setTimeout(() => setSyncState(false, ""), 2000);
+    } catch (error) {
+        console.error("Sync failed:", error);
+        setSyncState(false, "Sync Failed");
+        setTimeout(() => setSyncState(false, ""), 2000);
     }
 }

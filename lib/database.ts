@@ -14,6 +14,8 @@ export async function initDatabase(): Promise<void> {
       image TEXT,
       ai_enabled INTEGER DEFAULT 0,
       synced INTEGER DEFAULT 0,
+      sync_enabled INTEGER DEFAULT 0,
+      last_sync TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -126,6 +128,7 @@ export async function getUserProfile(): Promise<UserProfile | null> {
     return {
         ...result,
         ai_enabled: Boolean(result.ai_enabled),
+        sync_enabled: Boolean(result.sync_enabled),
     } as UserProfile;
 }
 
@@ -157,6 +160,31 @@ export async function saveUserProfile(
         await db.runAsync(
             "INSERT INTO user_profile (name, email, image, ai_enabled) VALUES (?, ?, ?, ?)",
             [name, email ?? null, image ?? null, aiEnabled ? 1 : 0]
+        );
+    }
+}
+
+export async function setSyncEnabled(enabled: boolean): Promise<void> {
+    const existing = await getUserProfile();
+    if (existing) {
+        await db.runAsync(
+            "UPDATE user_profile SET sync_enabled = ?, synced = 0 WHERE id = ?",
+            [enabled ? 1 : 0, existing.id]
+        );
+    } else {
+        await db.runAsync(
+            "INSERT INTO user_profile (name, sync_enabled) VALUES (?, ?)",
+            ["User", enabled ? 1 : 0]
+        );
+    }
+}
+
+export async function setLastSync(dateStr: string): Promise<void> {
+    const existing = await getUserProfile();
+    if (existing) {
+        await db.runAsync(
+            "UPDATE user_profile SET last_sync = ?, synced = 0 WHERE id = ?",
+            [dateStr, existing.id]
         );
     }
 }
@@ -373,6 +401,8 @@ export interface UserProfile {
     image: string | null;
     ai_enabled: boolean;
     synced: number;
+    sync_enabled: boolean;
+    last_sync: string | null;
     created_at: string;
 }
 

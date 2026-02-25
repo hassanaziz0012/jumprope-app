@@ -2,7 +2,8 @@ import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { initDatabase } from "../lib/database";
+import { initDatabase, getUserProfile } from "../lib/database";
+import { SyncToast } from "../components/SyncToast";
 import * as Sentry from '@sentry/react-native';
 
 Sentry.init({
@@ -103,6 +104,7 @@ export default Sentry.wrap(function RootLayout() {
                         }}
                     />
                 </Stack>
+                <SyncToast />
             </ThemeProvider>
         </>
     );

@@ -29,6 +29,22 @@ const MIGRATIONS = [
             }
         }
     },
+    // Version 3: Add sync settings to user_profile
+    async (db: SQLite.SQLiteDatabase) => {
+        const userInfo = await db.getAllAsync<{ name: string }>(
+            "PRAGMA table_info(user_profile)"
+        );
+        if (!userInfo.some((col) => col.name === "sync_enabled")) {
+            await db.execAsync(
+                "ALTER TABLE user_profile ADD COLUMN sync_enabled INTEGER DEFAULT 0;"
+            );
+        }
+        if (!userInfo.some((col) => col.name === "last_sync")) {
+            await db.execAsync(
+                "ALTER TABLE user_profile ADD COLUMN last_sync TEXT;"
+            );
+        }
+    },
 ];
 
 export async function runMigrations(db: SQLite.SQLiteDatabase) {
