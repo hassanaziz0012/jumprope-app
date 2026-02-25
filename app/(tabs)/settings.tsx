@@ -200,6 +200,12 @@ export default function SettingsScreen() {
                     <Text style={styles.sectionTitle}>More</Text>
                     <View style={styles.settingsGroup}>
                         <SettingsItem
+                            icon="sync-outline"
+                            title="Sync"
+                            onPress={() => router.push("/sync")}
+                        />
+                        <View style={styles.separator} />
+                        <SettingsItem
                             icon="share-social-outline"
                             title="Share"
                             onPress={handleSharePress}
