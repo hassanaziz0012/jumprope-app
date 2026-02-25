@@ -424,13 +424,18 @@ export default function WorkoutForm({
 
                     {/* Notes */}
                     <View style={styles.inputGroup}>
-                        <View style={styles.labelRow}>
-                            <Ionicons
-                                name="document-text-outline"
-                                size={20}
-                                color="#a0a0a0"
-                            />
-                            <Text style={styles.label}>Notes (optional)</Text>
+                        <View style={[styles.labelRow, { justifyContent: "space-between" }]}>
+                            <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                <Ionicons
+                                    name="document-text-outline"
+                                    size={20}
+                                    color="#a0a0a0"
+                                />
+                                <Text style={styles.label}>Notes (optional)</Text>
+                            </View>
+                            <Text style={styles.charCount}>
+                                {notes.length}/500
+                            </Text>
                         </View>
                         <TextInput
                             style={[styles.input, styles.textArea]}
@@ -441,6 +446,7 @@ export default function WorkoutForm({
                             multiline
                             numberOfLines={4}
                             textAlignVertical="top"
+                            maxLength={500}
                         />
                     </View>
                 </ScrollView>
@@ -490,6 +496,10 @@ const styles = StyleSheet.create({
         fontWeight: "500",
         color: "#a0a0a0",
         marginLeft: 8,
+    },
+    charCount: {
+        fontSize: 12,
+        color: "#666666",
     },
     input: {
         backgroundColor: "#1a1a1a",
