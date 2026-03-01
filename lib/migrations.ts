@@ -1,4 +1,5 @@
 import * as SQLite from "expo-sqlite";
+import * as Crypto from "expo-crypto";
 
 // Array of migration functions. Index in the array corresponds to the database version
 // it targets.
@@ -42,6 +43,31 @@ const MIGRATIONS = [
         if (!userInfo.some((col) => col.name === "last_sync")) {
             await db.execAsync(
                 "ALTER TABLE user_profile ADD COLUMN last_sync TEXT;"
+            );
+        }
+    },
+    // Version 4: Add sync_token to user_profile
+    async (db: SQLite.SQLiteDatabase) => {
+        const userInfo = await db.getAllAsync<{ name: string }>(
+            "PRAGMA table_info(user_profile)"
+        );
+        if (!userInfo.some((col) => col.name === "sync_token")) {
+            await db.execAsync(
+                "ALTER TABLE user_profile ADD COLUMN sync_token TEXT;"
+            );
+            // Populate sync_token for existing profiles
+            const users = await db.getAllAsync<{ id: number }>(
+                "SELECT id FROM user_profile WHERE sync_token IS NULL"
+            );
+            for (const user of users) {
+                await db.runAsync(
+                    "UPDATE user_profile SET sync_token = ? WHERE id = ?",
+                    [Crypto.randomUUID(), user.id]
+                );
+            }
+            // Create a unique index instead of adding UNIQUE constraint to column directly
+            await db.execAsync(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_user_profile_sync_token ON user_profile(sync_token);"
             );
         }
     },

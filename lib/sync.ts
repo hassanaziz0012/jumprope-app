@@ -204,3 +204,26 @@ export async function runSync() {
         setTimeout(() => setSyncState(false, ""), 2000);
     }
 }
+
+/**
+ * Delete all user data from the backend API.
+ */
+export async function deleteUserData(): Promise<any> {
+    const userProfile = await getUserProfile();
+    if (!userProfile) {
+        throw new Error("No user profile found");
+    }
+    if (!userProfile.sync_token) {
+        throw new Error("No sync token found for the user");
+    }
+
+    const response = await fetch(`${API_URL}/sync/delete-user-data?sync_token=${userProfile.sync_token}`, {
+        method: "DELETE",
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to delete user data: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
