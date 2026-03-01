@@ -8,8 +8,15 @@ import { Ionicons } from "@expo/vector-icons";
 import AIChatHeader from "../components/AIChatHeader";
 import AIPromptSuggestions from "../components/AIPromptSuggestions";
 import AIChatInput from "../components/AIChatInput";
+import AIHistorySidebar from "../components/AIHistorySidebar";
 import EventSource from "react-native-sse";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import Markdown from "react-native-markdown-display";
+import { getToolDisplayInfo, formatToolArgs, askAgent } from "../../lib/aiCoach/ask";
+import { fetchConversationHistory, deleteConversation } from "../../lib/aiCoach/chats";
+import { createWorkout } from "../../lib/models/workout";
+import { addRestDay } from "../../lib/models/restDays";
+import { updateGoal } from "../../lib/models/goals";
 
 interface Message {
     id: string;
@@ -17,59 +24,10 @@ interface Message {
     text?: string;
     tool?: string;
     args?: Record<string, any>;
+    result?: any;
+    status?: "pending" | "approved" | "rejected";
     completed?: boolean;
 }
-
-const getToolDisplayInfo = (toolName: string) => {
-    switch (toolName) {
-        case "get_workouts":
-            return { title: "Fetching Workouts", icon: "calendar" as const };
-        case "get_workout_details":
-            return { title: "Fetching Workout Details", icon: "barbell" as const };
-        case "get_streaks":
-            return { title: "Checking Streaks", icon: "flame" as const };
-        case "get_goals":
-            return { title: "Checking Goals", icon: "trophy" as const };
-        case "get_chart_data":
-            return { title: "Generating Chart Data", icon: "bar-chart" as const };
-        default:
-            return { title: `Using tool: ${toolName}`, icon: "build" as const };
-    }
-};
-
-const formatToolArgs = (args: Record<string, any> | undefined) => {
-    if (!args || Object.keys(args).length === 0) return null;
-
-    const formattedArgs: string[] = [];
-
-    for (const [key, value] of Object.entries(args)) {
-        let displayValue = value;
-        let displayKey = key.replace(/_/g, " ");
-        
-        displayKey = displayKey.charAt(0).toUpperCase() + displayKey.slice(1);
-
-        if ((key === "date_from" || key === "date_to") && typeof value === "string") {
-            try {
-                const date = new Date(value);
-                if (!isNaN(date.getTime())) {
-                    displayValue = date.toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric"
-                    });
-                }
-            } catch (e) {}
-        }
-
-        if (key === "metric" && typeof value === "string") {
-            displayValue = value.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-        }
-
-        formattedArgs.push(`${displayKey}: ${displayValue}`);
-    }
-
-    return formattedArgs.join(" • ");
-};
 
 export default function AIScreen() {
     const [user, setUser] = useState<UserProfile | null>(null);
@@ -78,6 +36,8 @@ export default function AIScreen() {
     // Chat state
     const [messages, setMessages] = useState<Message[]>([]);
     const [conversationTitle, setConversationTitle] = useState("");
+    const [conversationId, setConversationId] = useState<string | null>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     
     const scrollViewRef = useRef<ScrollView>(null);
     const eventSourceRef = useRef<EventSource | null>(null);
@@ -110,6 +70,85 @@ export default function AIScreen() {
         setModalVisible(false);
     };
 
+    const startAgentStream = async (text: string, continueConversation: boolean = false) => {
+        if (eventSourceRef.current) {
+            eventSourceRef.current.close();
+        }
+
+        console.log("Starting agent stream with text:", text);
+
+        const es = await askAgent(text, conversationId, {
+            onConversationId: (id, title) => {
+                if (title) setConversationTitle(title);
+                if (id) setConversationId(id);
+            },
+            onStatus: (message) => {
+                setMessages(prev => [
+                    ...prev,
+                    {
+                        id: Date.now().toString() + Math.random(),
+                        type: "status",
+                        text: message
+                    }
+                ]);
+            },
+            onToolCall: (tool, args) => {
+                setMessages(prev => [
+                    ...prev,
+                    {
+                        id: Date.now().toString() + Math.random(),
+                        type: "tool_call",
+                        tool,
+                        args,
+                        completed: false
+                    }
+                ]);
+            },
+            onToolResult: (tool, result) => {
+                const isWriteTool = ["create_workout", "mark_rest_day", "set_goal"].includes(tool);
+                setMessages(prev => {
+                    const newMessages = [...prev];
+                    for (let i = newMessages.length - 1; i >= 0; i--) {
+                        if (newMessages[i].type === "tool_call" && newMessages[i].tool === tool && !newMessages[i].completed) {
+                            newMessages[i] = { 
+                                ...newMessages[i], 
+                                completed: true,
+                                result,
+                                status: isWriteTool ? "pending" : undefined 
+                            };
+                            break;
+                        }
+                    }
+                    return newMessages;
+                });
+            },
+            onFinalResponse: (text) => {
+                setMessages(prev => [
+                    ...prev,
+                    {
+                        id: Date.now().toString() + Math.random(),
+                        type: "ai_message",
+                        text
+                    }
+                ]);
+                eventSourceRef.current = null;
+            },
+            onError: (message) => {
+                setMessages(prev => [
+                    ...prev,
+                    {
+                        id: Date.now().toString() + Math.random(),
+                        type: "error",
+                        text: message || "An error occurred."
+                    }
+                ]);
+                eventSourceRef.current = null;
+            }
+        }, continueConversation);
+
+        eventSourceRef.current = es;
+    };
+
     const handleSendMessage = async (text: string) => {
         // Add message to state
         const newMessage: Message = {
@@ -125,106 +164,114 @@ export default function AIScreen() {
             setConversationTitle("New Conversation"); // Would realistically be generated by AI
         }
         
-        if (eventSourceRef.current) {
-            eventSourceRef.current.close();
-        }
+        await startAgentStream(text, false);
+    };
 
-        const es = new EventSource("https://jumprope-api.vercel.app/ask-agent", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ message: text })
-        });
-
-        eventSourceRef.current = es;
-
-        es.addEventListener("message", (event: any) => {
-            if (!event.data) return;
-
-            try {
-                const data = JSON.parse(event.data);
-                
-                setMessages(prev => {
-                    const newMessages = [...prev];
-                    
-                    if (data.type === "status") {
-                        newMessages.push({
-                            id: Date.now().toString() + Math.random(),
-                            type: "status",
-                            text: data.message
-                        });
-                    } else if (data.type === "tool_call") {
-                        newMessages.push({
-                            id: Date.now().toString() + Math.random(),
-                            type: "tool_call",
-                            tool: data.tool,
-                            args: data.args,
-                            completed: false
-                        });
-                    } else if (data.type === "tool_result") {
-                        for (let i = newMessages.length - 1; i >= 0; i--) {
-                            if (newMessages[i].type === "tool_call" && newMessages[i].tool === data.tool && !newMessages[i].completed) {
-                                newMessages[i] = { ...newMessages[i], completed: true };
-                                break;
-                            }
-                        }
-                    } else if (data.type === "final_response") {
-                        newMessages.push({
-                            id: Date.now().toString() + Math.random(),
-                            type: "ai_message",
-                            text: data.text
-                        });
-                        es.close();
-                        eventSourceRef.current = null;
-                    } else if (data.type === "error") {
-                        newMessages.push({
-                            id: Date.now().toString() + Math.random(),
-                            type: "error",
-                            text: data.message || "An error occurred."
-                        });
-                        es.close();
-                        eventSourceRef.current = null;
-                    }
-                    
-                    return newMessages;
+    const handleApproveTool = async (msgId: string) => {
+        const msg = messages.find(m => m.id === msgId);
+        if (!msg || !msg.tool || !msg.result) return;
+        
+        try {
+            if (msg.tool === "create_workout") {
+                await createWorkout({
+                    date: msg.result.date,
+                    duration: msg.result.duration,
+                    totalSkips: msg.result.total_skips,
+                    avgSkipsPerMinute: msg.result.avg_skips_per_minute,
+                    trips: msg.result.trips,
+                    calories: msg.result.calories,
+                    heartRateAvg: msg.result.heart_rate_avg,
+                    heartRateMax: msg.result.heart_rate_max,
+                    notes: msg.result.notes
                 });
-            } catch (err) {
-                console.error("Failed to parse SSE event data:", err);
+            } else if (msg.tool === "mark_rest_day") {
+                await addRestDay(msg.result.date);
+            } else if (msg.tool === "set_goal") {
+                await updateGoal(msg.result.updated_goal, msg.result.new_value);
             }
-        });
 
-        es.addEventListener("error", (error: any) => {
-            console.error("SSE error:", error);
-            // Ignore connection close events disguised as errors during normal operations
-            if (error && error.type === "error" && error.message && error.message.includes("closed")) {
-                return;
-            }
+            setMessages(prev => prev.map(m => m.id === msgId ? { ...m, status: "approved" } : m));
             
-            setMessages(prev => [
-                ...prev, 
-                {
-                    id: Date.now().toString() + Math.random(),
-                    text: "Sorry, I encountered an error communicating with the server.",
-                    type: "error"
-                }
-            ]);
-            
-            if (eventSourceRef.current) {
-                eventSourceRef.current.close();
-                eventSourceRef.current = null;
-            }
-        });
+            // Continue conversation with agent after tool approval
+            await startAgentStream("", true);
+        } catch (err) {
+            console.error("Failed to apply changes to local database:", err);
+            setMessages(prev => prev.map(m => m.id === msgId ? { ...m, status: "rejected" } : m));
+        }
+    };
+
+    const handleRejectTool = (msgId: string) => {
+        setMessages(prev => prev.map(m => m.id === msgId ? { ...m, status: "rejected" } : m));
     };
 
     const handleHistoryPress = () => {
-        // Mock function for opening past conversations
-        console.log("History pressed");
+        setIsSidebarOpen(true);
     };
 
-    const handleClearConversation = () => {
+    const handleSelectConversation = async (id: string, title: string) => {
+        setConversationId(id);
+        setConversationTitle(title);
+        // Clear messages while we load the new ones
+        setMessages([]);
+
+        try {
+            const history = await fetchConversationHistory(id);
+            const formattedMessages: Message[] = history.messages.reduce((acc: Message[], msg, index) => {
+                if (msg.role === "tool" || msg.role === "function") {
+                    return acc;
+                }
+
+                if (msg.tool_calls && Array.isArray(msg.tool_calls)) {
+                    msg.tool_calls.forEach((tc, tcIndex) => {
+                        acc.push({
+                            id: `tc-${msg.id || Date.now()}-${index}-${tcIndex}`,
+                            type: "tool_call",
+                            tool: tc.name,
+                            args: tc.args,
+                            completed: true
+                        });
+                    });
+                }
+
+                if (msg.content) {
+                    acc.push({
+                        id: `msg-${msg.id || Date.now()}-${index}`,
+                        type: msg.role === "user" ? "user_message" : "ai_message",
+                        text: msg.content,
+                    });
+                }
+
+                return acc;
+            }, []);
+
+            setMessages(formattedMessages);
+        } catch (error) {
+            console.error("Failed to load conversation history:", error);
+            setMessages([{
+                id: Date.now().toString(),
+                type: "error",
+                text: "Failed to load conversation history."
+            }]);
+        }
+    };
+
+    const handleNewConversation = () => {
         setMessages([]);
         setConversationTitle("");
+        setConversationId(null);
+    };
+
+    const handleDeleteConversation = async () => {
+        if (conversationId) {
+            try {
+                await deleteConversation(conversationId);
+            } catch (error) {
+                console.error("Failed to delete conversation from backend:", error);
+            }
+        }
+        setMessages([]);
+        setConversationTitle("");
+        setConversationId(null);
     };
 
     if (!user?.ai_enabled) {
@@ -258,7 +305,12 @@ export default function AIScreen() {
     // Main AI Chat Interface
     return (
         <SafeAreaView style={styles.container}>
-            <AIChatHeader title={conversationTitle} onHistoryPress={handleHistoryPress} onClearConversation={handleClearConversation} />
+            <AIChatHeader 
+                title={conversationTitle} 
+                onHistoryPress={handleHistoryPress} 
+                onDeleteConversation={handleDeleteConversation} 
+                onNewConversation={handleNewConversation} 
+            />
             
             <ScrollView 
                 style={styles.chatArea}
@@ -296,9 +348,16 @@ export default function AIScreen() {
                                             msg.type === "user_message" ? styles.messageUser : styles.messageAI
                                         ]}
                                     >
-                                        <Text style={styles.messageText}>{msg.text}</Text>
+                                        {msg.type === "ai_message" ? (
+                                            <Markdown style={markdownStyles}>
+                                                {msg.text || ""}
+                                            </Markdown>
+                                        ) : (
+                                            <Text style={styles.messageText}>{msg.text}</Text>
+                                        )}
                                     </Animated.View>
                                 );
+
                             } else if (msg.type === "status") {
                                 return (
                                     <Animated.View key={msg.id} entering={FadeInDown.duration(400).springify()} style={styles.statusContainer}>
@@ -312,7 +371,7 @@ export default function AIScreen() {
                                 );
                             } else if (msg.type === "tool_call") {
                                 const toolInfo = getToolDisplayInfo(msg.tool || "");
-                                const formattedArgs = formatToolArgs(msg.args);
+                                const formattedArgsList = formatToolArgs(msg.tool || "", msg.args);
 
                                 return (
                                     <Animated.View key={msg.id} entering={FadeInDown.duration(400).springify()} style={styles.toolCallCard}>
@@ -320,14 +379,46 @@ export default function AIScreen() {
                                             <Ionicons name={toolInfo.icon} size={18} color="#ff5526" />
                                             <Text style={styles.toolCallTitle}>{toolInfo.title}</Text>
                                             {msg.completed ? (
-                                                <Ionicons name="checkmark-circle" size={18} color="#ccfa53" style={styles.toolCallStatusIcon} />
+                                                msg.status === "pending" ? (
+                                                    <View style={styles.pendingBadge}>
+                                                        <Text style={styles.pendingBadgeText}>Needs Approval</Text>
+                                                    </View>
+                                                ) : msg.status === "approved" ? (
+                                                    <Ionicons name="checkmark-circle" size={18} color="#ccfa53" style={styles.toolCallStatusIcon} />
+                                                ) : msg.status === "rejected" ? (
+                                                    <Ionicons name="close-circle" size={18} color="#ff5526" style={styles.toolCallStatusIcon} />
+                                                ) : (
+                                                    <Ionicons name="checkmark-circle" size={18} color="#ccfa53" style={styles.toolCallStatusIcon} />
+                                                )
                                             ) : (
                                                 <ActivityIndicator size="small" color="#ccfa53" style={[styles.toolCallStatusIcon, { transform: [{ scale: 0.8 }] }]} />
                                             )}
                                         </View>
-                                        {formattedArgs && (
-                                            <View style={styles.toolCallArgsContainer}>
-                                                <Text style={styles.toolCallArgsText}>{formattedArgs}</Text>
+                                        {formattedArgsList && formattedArgsList.length > 0 && (
+                                            <View style={styles.toolArgsGrid}>
+                                                {formattedArgsList.map((arg, i) => (
+                                                    <View key={i} style={styles.toolArgPill}>
+                                                        <Text style={styles.toolArgLabel}>{arg.label}</Text>
+                                                        <Text style={styles.toolArgValue}>{arg.value}</Text>
+                                                    </View>
+                                                ))}
+                                            </View>
+                                        )}
+                                        {msg.status === "pending" && (
+                                            <View style={styles.toolCallActions}>
+                                                <Button 
+                                                    title="Reject" 
+                                                    onPress={() => handleRejectTool(msg.id)}
+                                                    variant="secondary"
+                                                    style={styles.toolCallButton}
+                                                />
+                                                <View style={{ width: 8 }} />
+                                                <Button 
+                                                    title="Approve" 
+                                                    onPress={() => handleApproveTool(msg.id)}
+                                                    variant="primary"
+                                                    style={styles.toolCallButton}
+                                                />
                                             </View>
                                         )}
                                     </Animated.View>
@@ -347,6 +438,13 @@ export default function AIScreen() {
             </ScrollView>
 
             <AIChatInput onSend={handleSendMessage} />
+            
+            <AIHistorySidebar 
+                isOpen={isSidebarOpen} 
+                onClose={() => setIsSidebarOpen(false)} 
+                onSelectConversation={handleSelectConversation}
+                onNewConversation={handleNewConversation}
+            />
         </SafeAreaView>
     );
 }
@@ -497,16 +595,53 @@ const styles = StyleSheet.create({
     toolCallStatusIcon: {
         marginLeft: 8,
     },
-    toolCallArgsContainer: {
-        backgroundColor: "rgba(0,0,0,0.2)",
-        borderRadius: 8,
-        padding: 8,
+    pendingBadge: {
+        backgroundColor: "rgba(255, 165, 0, 0.2)",
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+        marginLeft: 8,
+    },
+    pendingBadgeText: {
+        color: "#ffa500",
+        fontSize: 10,
+        fontWeight: "bold",
+    },
+    toolCallActions: {
+        flexDirection: "row",
+        justifyContent: "flex-end",
         marginTop: 12,
     },
-    toolCallArgsText: {
-        color: "#a0a0a0",
-        fontSize: 12,
-        fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    toolCallButton: {
+        minHeight: 36,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+    },
+    toolArgsGrid: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: 8,
+        marginTop: 12,
+    },
+    toolArgPill: {
+        backgroundColor: "rgba(0,0,0,0.3)",
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.05)",
+    },
+    toolArgLabel: {
+        color: "#888888",
+        fontSize: 10,
+        textTransform: "uppercase",
+        fontWeight: "600",
+        marginBottom: 2,
+    },
+    toolArgValue: {
+        color: "#ffffff",
+        fontSize: 13,
+        fontWeight: "500",
     },
     errorCard: {
         flexDirection: "row",
@@ -527,4 +662,52 @@ const styles = StyleSheet.create({
         marginLeft: 8,
         flex: 1,
     },
+});
+
+const markdownStyles = StyleSheet.create({
+    body: {
+        color: "#ffffff",
+        fontSize: 16,
+        lineHeight: 22,
+    },
+    paragraph: {
+        marginTop: 0,
+        marginBottom: 8,
+    },
+    code_inline: {
+        backgroundColor: "rgba(255, 255, 255, 0.1)",
+        color: "#ccfa53",
+        borderRadius: 4,
+        paddingHorizontal: 4,
+        paddingVertical: 2,
+        fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    },
+    code_block: {
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        color: "#ffffff",
+        borderRadius: 8,
+        padding: 12,
+        fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+        marginTop: 8,
+        marginBottom: 8,
+    },
+    fence: {
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        color: "#ffffff",
+        borderRadius: 8,
+        padding: 12,
+        fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+        marginTop: 8,
+        marginBottom: 8,
+    },
+    heading1: { fontSize: 24, fontWeight: 'bold', marginTop: 12, marginBottom: 8, color: '#ffffff' },
+    heading2: { fontSize: 22, fontWeight: 'bold', marginTop: 12, marginBottom: 8, color: '#ffffff' },
+    heading3: { fontSize: 20, fontWeight: 'bold', marginTop: 12, marginBottom: 8, color: '#ffffff' },
+    heading4: { fontSize: 18, fontWeight: 'bold', marginTop: 12, marginBottom: 8, color: '#ffffff' },
+    heading5: { fontSize: 16, fontWeight: 'bold', marginTop: 12, marginBottom: 8, color: '#ffffff' },
+    heading6: { fontSize: 16, fontWeight: 'bold', marginTop: 12, marginBottom: 8, color: '#ffffff' },
+    link: { color: "#ccfa53", textDecorationLine: "underline" },
+    list_item: { marginBottom: 4 },
+    bullet_list: { marginBottom: 8 },
+    ordered_list: { marginBottom: 8 },
 });

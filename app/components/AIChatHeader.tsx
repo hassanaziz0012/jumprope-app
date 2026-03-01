@@ -6,14 +6,16 @@ interface AIChatHeaderProps {
     title: string;
     onHistoryPress: () => void;
     onMenuPress?: () => void;
-    onClearConversation?: () => void;
+    onDeleteConversation?: () => void;
+    onNewConversation?: () => void;
 }
 
 export default function AIChatHeader({
     title,
     onHistoryPress,
     onMenuPress,
-    onClearConversation,
+    onDeleteConversation,
+    onNewConversation,
 }: AIChatHeaderProps) {
     const [menuVisible, setMenuVisible] = useState(false);
 
@@ -65,11 +67,22 @@ export default function AIChatHeader({
                             style={styles.sheetOption}
                             onPress={() => {
                                 setMenuVisible(false);
-                                onClearConversation?.();
+                                onNewConversation?.();
+                            }}
+                        >
+                            <Ionicons name="add-circle-outline" size={24} color="#ffffff" />
+                            <Text style={styles.sheetOptionText}>New Conversation</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            style={styles.sheetOption}
+                            onPress={() => {
+                                setMenuVisible(false);
+                                onDeleteConversation?.();
                             }}
                         >
                             <Ionicons name="trash-outline" size={24} color="#ff5526" />
-                            <Text style={styles.sheetOptionTextDanger}>Clear Conversation</Text>
+                            <Text style={styles.sheetOptionTextDanger}>Delete Conversation</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity 
@@ -153,6 +166,12 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         borderBottomWidth: 1,
         borderBottomColor: "rgba(255, 255, 255, 0.05)",
+    },
+    sheetOptionText: {
+        color: "#ffffff",
+        fontSize: 16,
+        fontWeight: "600",
+        marginLeft: 12,
     },
     sheetOptionTextDanger: {
         color: "#ff5526",
