@@ -71,9 +71,24 @@ const MIGRATIONS = [
             );
         }
     },
+    // Version 5: Add updated_at to workout
+    async (db: SQLite.SQLiteDatabase) => {
+        const tableInfo = await db.getAllAsync<{ name: string }>(
+            "PRAGMA table_info(workout)"
+        );
+        if (!tableInfo.some((col) => col.name === "updated_at")) {
+            await db.execAsync(
+                "ALTER TABLE workout ADD COLUMN updated_at TEXT;"
+            );
+            await db.execAsync(
+                "UPDATE workout SET updated_at = date;"
+            );
+        }
+    },
 ];
 
 export async function runMigrations(db: SQLite.SQLiteDatabase) {
+    let currentMigrationIndex = -1;
     try {
         let response = await db.getFirstAsync<{ user_version: number }>(
             "PRAGMA user_version"
@@ -91,6 +106,7 @@ export async function runMigrations(db: SQLite.SQLiteDatabase) {
 
         // Run all pending migrations sequentially
         for (let i = currentDbVersion; i < MIGRATIONS.length; i++) {
+            currentMigrationIndex = i;
             console.log(`Applying migration ${i + 1}...`);
             await MIGRATIONS[i](db);
         }
@@ -99,7 +115,11 @@ export async function runMigrations(db: SQLite.SQLiteDatabase) {
         await db.execAsync(`PRAGMA user_version = ${MIGRATIONS.length}`);
         console.log("Database migrations completed successfully");
     } catch (e) {
-        console.error("Error migrating database:", e);
+        if (currentMigrationIndex >= 0) {
+            console.error(`Error migrating database on migration ${currentMigrationIndex + 1}:`, e);
+        } else {
+            console.error("Error migrating database:", e);
+        }
         throw e;
     }
 }

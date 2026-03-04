@@ -12,6 +12,7 @@ export interface Workout {
     heart_rate_max: number | null;
     notes: string | null;
     synced: number;
+    updated_at: string;
     created_at: string;
 }
 
@@ -86,7 +87,7 @@ export async function updateWorkout(
     await db.runAsync(
         `UPDATE workout SET 
             date = ?, duration = ?, total_skips = ?, avg_skips_per_minute = ?, 
-            trips = ?, calories = ?, heart_rate_avg = ?, heart_rate_max = ?, notes = ?, synced = 0
+            trips = ?, calories = ?, heart_rate_avg = ?, heart_rate_max = ?, notes = ?, synced = 0, updated_at = ?
          WHERE id = ?`,
         [
             updated.date,
@@ -98,6 +99,7 @@ export async function updateWorkout(
             updated.heartRateAvg ?? null,
             updated.heartRateMax ?? null,
             updated.notes ?? null,
+            new Date().toISOString(),
             id,
         ]
     );

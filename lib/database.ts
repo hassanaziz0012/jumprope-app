@@ -32,6 +32,7 @@ export async function initDatabase(): Promise<void> {
       heart_rate_max INTEGER,
       notes TEXT,
       synced INTEGER DEFAULT 0,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
