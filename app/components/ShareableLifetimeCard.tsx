@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { formatDuration } from "../../lib/dates";
 
 export interface LifetimeStats {
     totalWorkouts: number;
@@ -17,13 +18,6 @@ interface ShareableLifetimeCardProps {
 export default function ShareableLifetimeCard({
     stats,
 }: ShareableLifetimeCardProps) {
-    const formatDuration = (seconds: number): string => {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        if (minutes === 0) return `${remainingSeconds}s`;
-        return `${minutes}m ${remainingSeconds}s`;
-    };
-
     const statItems = [
         {
             label: "Best Skips",

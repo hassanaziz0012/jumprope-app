@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Workout } from "../../lib/database";
+import { formatDuration } from "../../lib/dates";
 
 interface WorkoutCardProps {
     workout: Workout;
@@ -23,14 +24,6 @@ export default function WorkoutCard({ workout, onPress }: WorkoutCardProps) {
             month: "short",
             day: "numeric",
         });
-    };
-
-    const formatDuration = (seconds: number): string => {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        if (minutes === 0) return `${remainingSeconds}s`;
-        if (remainingSeconds === 0) return `${minutes} min`;
-        return `${minutes}m ${remainingSeconds}s`;
     };
 
     return (
