@@ -12,7 +12,8 @@
         "lint": "expo lint",
         "draft": "npx eas-cli@latest workflow:run create-draft.yml",
         "development-builds": "npx eas-cli@latest workflow:run create-development-builds.yml",
-        "deploy": "npx eas-cli@latest workflow:run deploy-to-production.yml"
+        "deploy": "npx eas-cli@latest workflow:run deploy-to-production.yml",
+        "build:apk": "eas build -p android --profile production-apk"
     },
     "dependencies": {
         "@expo/metro-runtime": "~6.1.2",
