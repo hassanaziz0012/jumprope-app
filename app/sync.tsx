@@ -264,12 +264,14 @@ export default function SyncScreen() {
                             </View>
                         )}
 
-                        <Pressable 
-                            style={[styles.modalButton, styles.modalCancelButton]} 
-                            onPress={() => setShowSuccessModal(false)}
-                        >
-                            <Text style={styles.modalCancelText}>Close</Text>
-                        </Pressable>
+                        <View style={styles.modalButtonGroup}>
+                            <Pressable 
+                                style={[styles.modalButton, styles.modalCancelButton]} 
+                                onPress={() => setShowSuccessModal(false)}
+                            >
+                                <Text style={styles.modalCancelText}>OK</Text>
+                            </Pressable>
+                        </View>
                     </View>
                 </View>
             </Modal>
