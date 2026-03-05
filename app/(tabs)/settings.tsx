@@ -1,12 +1,6 @@
-import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
-import * as Sharing from "expo-sharing";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import {
-    ActivityIndicator,
-    Linking,
-    Modal,
-    Pressable,
     ScrollView,
     StyleSheet,
     Switch,
@@ -14,19 +8,17 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { captureRef } from "react-native-view-shot";
 import {
     getAllWorkouts,
     getUserProfile,
     type UserProfile,
 } from "../../lib/database";
-import { aboutLinks } from "../../lib/social";
 import ProfileCard from "../components/ProfileCard";
 import SettingsItem from "../components/SettingsItem";
-import ShareableLifetimeCard, {
-    type LifetimeStats,
-} from "../components/ShareableLifetimeCard";
+import { type LifetimeStats } from "../components/ShareableLifetimeCard";
 import AIConsentModal from "../components/AIConsentModal";
+import AboutModal from "../components/settings/AboutModal";
+import ShareLifetimeModal from "../components/settings/ShareLifetimeModal";
 import { saveUserProfile } from "../../lib/database";
 
 export default function SettingsScreen() {
@@ -40,7 +32,6 @@ export default function SettingsScreen() {
 
     const [stats, setStats] = useState<LifetimeStats | null>(null);
     const [loadingStats, setLoadingStats] = useState(false);
-    const cardRef = useRef<View>(null);
 
     useFocusEffect(
         useCallback(() => {
@@ -100,18 +91,6 @@ export default function SettingsScreen() {
             console.error("Error calculating stats:", error);
         } finally {
             setLoadingStats(false);
-        }
-    };
-
-    const handleShareContent = async () => {
-        try {
-            const uri = await captureRef(cardRef, {
-                format: "png",
-                quality: 1,
-            });
-            await Sharing.shareAsync(uri);
-        } catch (error) {
-            console.error("Error sharing:", error);
         }
     };
 
@@ -227,135 +206,18 @@ export default function SettingsScreen() {
             </ScrollView>
 
             {/* Share Modal */}
-            <Modal
+            <ShareLifetimeModal
                 visible={shareModalVisible}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setShareModalVisible(false)}
-            >
-                <Pressable
-                    style={styles.modalOverlay}
-                    onPress={() => setShareModalVisible(false)}
-                >
-                    <View style={styles.modalContent}>
-                        {loadingStats ? (
-                            <ActivityIndicator
-                                size="large"
-                                color="#ff5526"
-                                style={styles.loader}
-                            />
-                        ) : stats ? (
-                            <View style={styles.shareContainer}>
-                                <View
-                                    ref={cardRef}
-                                    style={styles.cardContainer}
-                                    collapsable={false}
-                                >
-                                    <ShareableLifetimeCard stats={stats} />
-                                </View>
-                                <Pressable
-                                    style={styles.shareButton}
-                                    onPress={handleShareContent}
-                                >
-                                    <Text style={styles.shareButtonText}>
-                                        Share
-                                    </Text>
-                                    <Ionicons
-                                        name="share-outline"
-                                        size={20}
-                                        color="#ffffff"
-                                    />
-                                </Pressable>
-                            </View>
-                        ) : (
-                            <>
-                                <Ionicons
-                                    name="share-social"
-                                    size={48}
-                                    color="#ff5526"
-                                />
-                                <Text style={styles.modalTitle}>Share</Text>
-                                <Text style={styles.modalSubtitle}>
-                                    No workouts found to share.
-                                </Text>
-                            </>
-                        )}
-                        <Pressable
-                            style={styles.modalCloseButton}
-                            onPress={() => setShareModalVisible(false)}
-                        >
-                            <Text style={styles.modalCloseText}>Close</Text>
-                        </Pressable>
-                    </View>
-                </Pressable>
-            </Modal>
+                onClose={() => setShareModalVisible(false)}
+                stats={stats}
+                loadingStats={loadingStats}
+            />
 
             {/* About Modal */}
-            <Modal
+            <AboutModal
                 visible={aboutModalVisible}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setAboutModalVisible(false)}
-            >
-                <Pressable
-                    style={styles.modalOverlay}
-                    onPress={() => setAboutModalVisible(false)}
-                >
-                    <View style={styles.modalContent}>
-                        <Ionicons name="fitness" size={48} color="#ccfa53" />
-                        <Text style={styles.modalTitle}>Jumprope Tracker</Text>
-                        <Text style={styles.modalVersion}>Version 1.0.0</Text>
-                        <Text style={styles.modalSubtitle}>
-                            Track your jump rope workouts and improve your
-                            fitness!
-                        </Text>
-                        <Text style={styles.modalSubtitle}>
-                            I made this for tracking my own jumprope workouts.
-                            If this helps you, you can learn more about me and
-                            my work from any of the following links.
-                        </Text>
-                        <View style={styles.socialRow}>
-                            {[
-                                {
-                                    icon: "logo-twitter",
-                                    url: aboutLinks.twitter,
-                                },
-                                {
-                                    icon: "logo-youtube",
-                                    url: aboutLinks.youtube,
-                                },
-                                {
-                                    icon: "logo-github",
-                                    url: aboutLinks.github,
-                                },
-                                {
-                                    icon: "globe-outline",
-                                    url: aboutLinks.website,
-                                },
-                            ].map((item, index) => (
-                                <Pressable
-                                    key={index}
-                                    style={styles.socialButton}
-                                    onPress={() => Linking.openURL(item.url)}
-                                >
-                                    <Ionicons
-                                        name={item.icon as any}
-                                        size={24}
-                                        color="#ccfa53"
-                                    />
-                                </Pressable>
-                            ))}
-                        </View>
-
-                        <Pressable
-                            style={styles.modalCloseButton}
-                            onPress={() => setAboutModalVisible(false)}
-                        >
-                            <Text style={styles.modalCloseText}>Close</Text>
-                        </Pressable>
-                    </View>
-                </Pressable>
-            </Modal>
+                onClose={() => setAboutModalVisible(false)}
+            />
 
             {/* AI Consent Modal */}
             <AIConsentModal
@@ -409,91 +271,5 @@ const styles = StyleSheet.create({
         height: 1,
         backgroundColor: "#2a2a2a",
         marginLeft: 60,
-    },
-
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 32,
-    },
-    modalContent: {
-        backgroundColor: "#1a1a1a",
-        borderRadius: 20,
-        padding: 32,
-        width: "100%",
-        alignItems: "center",
-    },
-    modalTitle: {
-        fontSize: 24,
-        fontWeight: "700",
-        color: "#ffffff",
-        marginTop: 16,
-        marginBottom: 8,
-    },
-    modalSubtitle: {
-        fontSize: 16,
-        color: "#a0a0a0",
-        textAlign: "center",
-        marginBottom: 8,
-    },
-    modalVersion: {
-        fontSize: 14,
-        color: "#666666",
-        marginBottom: 24,
-    },
-    modalCloseButton: {
-        backgroundColor: "#2a2a2a",
-        paddingHorizontal: 32,
-        paddingVertical: 12,
-        borderRadius: 12,
-        marginTop: 8,
-    },
-    modalCloseText: {
-        fontSize: 16,
-        fontWeight: "600",
-        color: "#ffffff",
-    },
-    socialRow: {
-        flexDirection: "row",
-        gap: 16,
-        marginBottom: 24,
-        marginTop: 16,
-    },
-    socialButton: {
-        backgroundColor: "#2a2a2a",
-        width: 56,
-        height: 56,
-        borderRadius: 16,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    shareContainer: {
-        alignItems: "center",
-        width: "100%",
-    },
-    cardContainer: {
-        width: "100%",
-        marginBottom: 24,
-    },
-    shareButton: {
-        backgroundColor: "#ff5526",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        paddingVertical: 14,
-        paddingHorizontal: 32,
-        borderRadius: 12,
-        gap: 8,
-        width: "100%",
-    },
-    shareButtonText: {
-        fontSize: 16,
-        fontWeight: "700",
-        color: "#ffffff",
-    },
-    loader: {
-        marginVertical: 40,
     },
 });
