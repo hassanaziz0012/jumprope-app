@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
     Modal,
     Pressable,
@@ -6,6 +6,7 @@ import {
     Text,
     View,
     ScrollView,
+    Linking,
 } from "react-native";
 import Button from "./Button";
 import { Ionicons } from "@expo/vector-icons";
@@ -21,6 +22,14 @@ export default function AIConsentModal({
     onConsent,
     onCancel,
 }: AIConsentModalProps) {
+    const [agreedApp, setAgreedApp] = useState(false);
+    const [agreedGoogle, setAgreedGoogle] = useState(false);
+
+    const handleConsent = () => {
+        if (agreedApp && agreedGoogle) {
+            onConsent();
+        }
+    };
     return (
         <Modal
             visible={visible}
@@ -41,13 +50,46 @@ export default function AIConsentModal({
                         <Text style={styles.message}>
                             AI features are completely optional. If you do
                             decide to use the AI coach, your workout training
-                            data and history will be sent to Gemini servers.
+                            data and history will be sent to Google servers so you can use Google Gemini to provide AI features.
                         </Text>
                         <Text style={styles.message}>
                             If you consent to this then enable AI; otherwise the
                             base app features will work offline and locally
                             regardless of whether you use AI or not.
                         </Text>
+                        <Pressable onPress={() => Linking.openURL('https://ai.google.dev/gemini-api/terms')}>
+                            <Text style={styles.link}>
+                                Google Gemini Privacy Policy and Terms of Service
+                            </Text>
+                        </Pressable>
+                        
+                        <Pressable 
+                            style={styles.checkboxContainer} 
+                            onPress={() => setAgreedApp(!agreedApp)}
+                        >
+                            <Ionicons 
+                                name={agreedApp ? "checkbox" : "square-outline"} 
+                                size={24} 
+                                color={agreedApp ? "#ccfa53" : "#a0a0a0"} 
+                            />
+                            <Text style={styles.checkboxLabel}>
+                                I agree to let this app process my data to enable AI features.
+                            </Text>
+                        </Pressable>
+                        
+                        <Pressable 
+                            style={styles.checkboxContainer} 
+                            onPress={() => setAgreedGoogle(!agreedGoogle)}
+                        >
+                            <Ionicons 
+                                name={agreedGoogle ? "checkbox" : "square-outline"} 
+                                size={24} 
+                                color={agreedGoogle ? "#ccfa53" : "#a0a0a0"} 
+                            />
+                            <Text style={styles.checkboxLabel}>
+                                I agree to let Google Gemini process my workout data to enable AI features.
+                            </Text>
+                        </Pressable>
                     </ScrollView>
                     <View style={styles.buttons}>
                         <Button
@@ -58,9 +100,10 @@ export default function AIConsentModal({
                         />
                         <Button
                             title="I Consent"
-                            onPress={onConsent}
+                            onPress={handleConsent}
                             variant="primary"
                             style={styles.button}
+                            disabled={!agreedApp || !agreedGoogle}
                         />
                     </View>
                 </Pressable>
@@ -102,7 +145,7 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     messageScroll: {
-        maxHeight: 200,
+        maxHeight: 400,
         marginBottom: 24,
     },
     message: {
@@ -111,6 +154,26 @@ const styles = StyleSheet.create({
         textAlign: "center",
         lineHeight: 22,
         marginBottom: 12,
+    },
+    link: {
+        fontSize: 15,
+        color: "#ccfa53",
+        textAlign: "center",
+        textDecorationLine: "underline",
+        marginBottom: 24,
+    },
+    checkboxContainer: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        marginBottom: 16,
+        paddingHorizontal: 8,
+    },
+    checkboxLabel: {
+        fontSize: 14,
+        color: "#E0E0E0",
+        marginLeft: 12,
+        flex: 1,
+        lineHeight: 20,
     },
     buttons: {
         flexDirection: "row",

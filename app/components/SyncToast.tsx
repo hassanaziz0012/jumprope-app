@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { View, Text, StyleSheet, Animated, ActivityIndicator } from "react-native";
-import { subscribeToSyncState } from "../lib/syncState";
+import { subscribeToSyncState } from "../../lib/syncState";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export function SyncToast() {

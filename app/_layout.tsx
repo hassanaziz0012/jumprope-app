@@ -3,7 +3,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { initDatabase, getUserProfile } from "../lib/database";
-import { SyncToast } from "../components/SyncToast";
+import { SyncToast } from "./components/SyncToast";
 import * as Sentry from '@sentry/react-native';
 import { Platform } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';

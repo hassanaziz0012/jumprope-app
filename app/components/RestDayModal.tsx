@@ -96,21 +96,21 @@ export default function RestDayModal({
                             title="Close"
                             onPress={onClose}
                             variant="secondary"
-                            style={styles.button}
+                            style={styles.closeButton}
                         />
                         {isRestDay ? (
                             <Button
                                 title="Remove Rest Day"
                                 onPress={onRemoveRestDay}
                                 variant="primary"
-                                style={styles.button}
+                                style={styles.actionButton}
                             />
                         ) : (
                             <Button
                                 title="Mark Rest Day"
                                 onPress={onMarkRestDay}
                                 variant="primary"
-                                style={styles.button}
+                                style={styles.actionButton}
                             />
                         )}
                     </View>
@@ -185,7 +185,10 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         gap: 12,
     },
-    button: {
+    closeButton: {
         flex: 1,
+    },
+    actionButton: {
+        flex: 3,
     },
 });
