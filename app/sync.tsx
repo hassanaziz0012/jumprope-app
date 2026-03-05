@@ -1,12 +1,11 @@
 import { Stack } from "expo-router";
-import { StyleSheet, Text, View, Switch, Pressable, Modal, ScrollView, ActivityIndicator, Animated } from "react-native";
+import { StyleSheet, Text, View, Pressable, Modal, ScrollView, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { getUserProfile, setSyncEnabled as setSyncEnabledDB, markAllDataAsUnsynced } from "../lib/database";
 import { runSync, deleteUserData } from "../lib/sync";
-import { AnimatedToggle } from "../components/AnimatedToggle";
-import { Ionicons } from "@expo/vector-icons";
-import * as Clipboard from "expo-clipboard";
+import { SyncSettingsCard } from "./components/sync/SyncSettingsCard";
+import { SyncDebugCard } from "./components/sync/SyncDebugCard";
 
 export default function SyncScreen() {
     const insets = useSafeAreaInsets();
@@ -17,40 +16,6 @@ export default function SyncScreen() {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [deleteResult, setDeleteResult] = useState<any>(null);
     const [syncToken, setSyncToken] = useState<string | null>(null);
-
-    const [copied, setCopied] = useState(false);
-    const toastTranslateY = useRef(new Animated.Value(200)).current;
-    const iconScale = useRef(new Animated.Value(1)).current;
-
-    const handleCopyToken = async () => {
-        if (!syncToken || copied) return;
-        await Clipboard.setStringAsync(syncToken);
-        setCopied(true);
-        
-        iconScale.setValue(0.5);
-        Animated.spring(iconScale, {
-            toValue: 1,
-            friction: 3,
-            tension: 200,
-            useNativeDriver: true,
-        }).start();
-
-        Animated.spring(toastTranslateY, {
-            toValue: 0,
-            useNativeDriver: true,
-            bounciness: 8,
-        }).start();
-
-        setTimeout(() => {
-            Animated.timing(toastTranslateY, {
-                toValue: 200,
-                duration: 300,
-                useNativeDriver: true,
-            }).start(() => {
-                setCopied(false);
-            });
-        }, 1000);
-    };
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -102,81 +67,16 @@ export default function SyncScreen() {
             </View>
 
             <View style={styles.content}>
-                <View style={styles.card}>
-                    <View style={styles.settingRow}>
-                        <Text style={styles.settingLabel}>Turn On Sync</Text>
-                        <AnimatedToggle
-                            value={syncEnabled}
-                            onValueChange={handleToggleSync}
-                            trackColor={{ false: "#2a2a2a", true: "#ff5526" }}
-                            thumbColor="#ffffff"
-                        />
-                    </View>
+                <SyncSettingsCard
+                    syncEnabled={syncEnabled}
+                    onToggleSync={handleToggleSync}
+                    lastSync={lastSync}
+                    onSyncNow={() => runSync()}
+                    onDeleteData={() => setShowDeleteModal(true)}
+                />
 
-                    <View style={styles.dateRow}>
-                        <Text style={styles.dateValue}>
-                            Last: {lastSync ? new Date(lastSync).toLocaleString() : "Never"}
-                        </Text>
-                    </View>
-
-                    <View style={styles.buttonGroup}>
-                        <Pressable style={styles.primaryButton} onPress={() => runSync()}>
-                            <Text style={styles.primaryButtonText}>Sync Now</Text>
-                        </Pressable>
-                        <Pressable 
-                            style={styles.secondaryButton} 
-                            onPress={() => setShowDeleteModal(true)}
-                        >
-                            <Text style={styles.secondaryButtonText}>Delete Data</Text>
-                        </Pressable>
-                    </View>
-                </View>
-
-                {/* Debug Card */}
-                <View style={styles.card}>
-                    <View style={styles.debugHeader}>
-                        <Text style={styles.debugTitle}>Debug Information</Text>
-                    </View>
-                    <Text style={styles.debugDisclaimer}>
-                        Each user gets a unique sync token for cloud sync and AI features. This is shown here only for debugging purposes, and should not be used by end users. If I (the developer of this app) ask you for your sync token for debugging purposes, you can copy it below.
-                    </Text>
-
-                    <View style={styles.syncTokenContainer}>
-                        <Text style={styles.syncTokenText} numberOfLines={1} ellipsizeMode="middle">
-                            {syncToken || "Not Available"}
-                        </Text>
-                        <Pressable 
-                            style={[
-                                styles.copyButton,
-                                copied && { backgroundColor: "rgba(204, 250, 83, 0.1)" }
-                            ]}
-                            onPress={handleCopyToken}
-                        >
-                            <Animated.View style={{ transform: [{ scale: iconScale }] }}>
-                                <Ionicons 
-                                    name={copied ? "checkmark-outline" : "copy-outline"} 
-                                    size={20} 
-                                    color={copied ? "#ccfa53" : "#ff5526"} 
-                                />
-                            </Animated.View>
-                        </Pressable>
-                    </View>
-                </View>
+                <SyncDebugCard syncToken={syncToken} />
             </View>
-
-            {/* Copy Toast */}
-            <Animated.View
-                style={[
-                    styles.toastContainer,
-                    { transform: [{ translateY: toastTranslateY }], bottom: Math.max(insets.bottom, 20) + 20 }
-                ]}
-                pointerEvents="none"
-            >
-                <View style={styles.toastContent}>
-                    <Ionicons name="checkmark-circle" size={20} color="#ccfa53" style={styles.toastIcon} />
-                    <Text style={styles.toastText}>Copied to clipboard</Text>
-                </View>
-            </Animated.View>
 
             {/* Delete Confirmation Modal */}
             <Modal
@@ -298,66 +198,6 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: 16,
     },
-    card: {
-        backgroundColor: "#1a1a1a",
-        borderRadius: 16,
-        padding: 20,
-        marginBottom: 16,
-    },
-    settingRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 16,
-    },
-    settingLabel: {
-        fontSize: 16,
-        fontWeight: "normal",
-        color: "#ffffff",
-    },
-    dateRow: {
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
-        marginBottom: 24,
-    },
-    dateValue: {
-        fontSize: 14,
-        color: "#a0a0a0",
-        fontWeight: "400",
-    },
-    buttonGroup: {
-        flexDirection: "row",
-        gap: 12,
-    },
-    primaryButton: {
-        flex: 1,
-        backgroundColor: "#ff5526",
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        borderRadius: 8,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    primaryButtonText: {
-        color: "#ffffff",
-        fontSize: 16,
-        fontWeight: "600",
-    },
-    secondaryButton: {
-        flex: 1,
-        backgroundColor: "#2a2a2a",
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        borderRadius: 8,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    secondaryButtonText: {
-        color: "#ff5526",
-        fontSize: 16,
-        fontWeight: "600",
-    },
     modalOverlay: {
         flex: 1,
         backgroundColor: "rgba(0, 0, 0, 0.7)",
@@ -440,69 +280,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     statValue: {
-        color: "#ffffff",
-        fontSize: 14,
-        fontWeight: "600",
-    },
-    debugHeader: {
-        marginBottom: 12,
-    },
-    debugTitle: {
-        fontSize: 18,
-        fontWeight: "700",
-        color: "#ffffff",
-    },
-    debugDisclaimer: {
-        fontSize: 14,
-        color: "#a0a0a0",
-        lineHeight: 20,
-        marginBottom: 16,
-    },
-    syncTokenContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        backgroundColor: "#2a2a2a",
-        padding: 12,
-        borderRadius: 8,
-    },
-    syncTokenText: {
-        flex: 1,
-        color: "#ffffff",
-        fontSize: 14,
-        fontFamily: "monospace",
-    },
-    copyButton: {
-        padding: 8,
-        marginLeft: 8,
-        backgroundColor: "rgba(255, 85, 38, 0.1)",
-        borderRadius: 6,
-    },
-    toastContainer: {
-        position: "absolute",
-        left: 0,
-        right: 0,
-        alignItems: "center",
-        zIndex: 9999,
-    },
-    toastContent: {
-        flexDirection: "row",
-        alignItems: "center",
-        backgroundColor: "#1a1a1a",
-        paddingHorizontal: 20,
-        paddingVertical: 12,
-        borderRadius: 24,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 5,
-        borderWidth: 1,
-        borderColor: "#2a2a2a",
-    },
-    toastIcon: {
-        marginRight: 8,
-    },
-    toastText: {
         color: "#ffffff",
         fontSize: 14,
         fontWeight: "600",
