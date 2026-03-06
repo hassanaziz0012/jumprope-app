@@ -111,7 +111,11 @@ export function useAIChat() {
         eventSourceRef.current = es;
     };
 
+    const userMessageCount = messages.filter(m => m.type === "user_message").length;
+
     const sendMessage = async (text: string) => {
+        if (userMessageCount >= 10) return;
+
         // Add message to state
         const newMessage: Message = {
             id: Date.now().toString(),
@@ -234,6 +238,7 @@ export function useAIChat() {
 
     return {
         messages,
+        userMessageCount,
         conversationTitle,
         conversationId,
         startAgentStream,
