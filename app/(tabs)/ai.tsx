@@ -13,6 +13,7 @@ import AIChatBubble from "../components/ai/AIChatBubble";
 import AIToolCallCard from "../components/ai/AIToolCallCard";
 import AIStatusMessage from "../components/ai/AIStatusMessage";
 import AIErrorMessage from "../components/ai/AIErrorMessage";
+import MessageLimitPill from "../components/ai/MessageLimitPill";
 import { useAIChat } from "../hooks/useAIChat";
 
 export default function AIScreen() {
@@ -24,6 +25,7 @@ export default function AIScreen() {
 
     const {
         messages,
+        userMessageCount,
         conversationTitle,
         sendMessage: handleSendMessage,
         approveTool: handleApproveTool,
@@ -93,6 +95,8 @@ export default function AIScreen() {
                 onDeleteConversation={handleDeleteConversation} 
                 onNewConversation={handleNewConversation} 
             />
+
+            <MessageLimitPill count={userMessageCount} />
             
             <ScrollView 
                 style={styles.chatArea}
@@ -150,7 +154,11 @@ export default function AIScreen() {
                 )}
             </ScrollView>
 
-            <AIChatInput onSend={handleSendMessage} />
+            <AIChatInput 
+                onSend={handleSendMessage} 
+                locked={userMessageCount >= 10}
+                onNewConversation={handleNewConversation}
+            />
             
             <AIHistorySidebar 
                 isOpen={isSidebarOpen} 
