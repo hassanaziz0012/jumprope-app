@@ -8,12 +8,15 @@ import {
     Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Button from "./Button";
 
 interface AIChatInputProps {
     onSend: (message: string) => void;
+    locked?: boolean;
+    onNewConversation?: () => void;
 }
 
-export default function AIChatInput({ onSend }: AIChatInputProps) {
+export default function AIChatInput({ onSend, locked, onNewConversation }: AIChatInputProps) {
     const [text, setText] = useState("");
 
     const handleSend = () => {
@@ -29,32 +32,43 @@ export default function AIChatInput({ onSend }: AIChatInputProps) {
             keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
             style={styles.container}
         >
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.textInput}
-                    placeholder="Feel free to ask anything..."
-                    placeholderTextColor="#666666"
-                    value={text}
-                    onChangeText={setText}
-                    multiline
-                    maxLength={500}
-                />
-                <TouchableOpacity
-                    style={[
-                        styles.sendButton,
-                        text.trim().length === 0 && styles.sendButtonDisabled,
-                    ]}
-                    onPress={handleSend}
-                    disabled={text.trim().length === 0}
-                    activeOpacity={0.7}
-                >
-                    <Ionicons
-                        name="arrow-up"
-                        size={20}
-                        color={text.trim().length === 0 ? "#666666" : "#ffffff"}
+            {locked ? (
+                <View style={[styles.inputContainer, styles.lockedContainer]}>
+                    <Button 
+                        title="Start New Conversation"
+                        onPress={onNewConversation || (() => {})}
+                        icon="chatbubbles-outline"
+                        style={styles.newChatButton}
                     />
-                </TouchableOpacity>
-            </View>
+                </View>
+            ) : (
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="Feel free to ask anything..."
+                        placeholderTextColor="#666666"
+                        value={text}
+                        onChangeText={setText}
+                        multiline
+                        maxLength={500}
+                    />
+                    <TouchableOpacity
+                        style={[
+                            styles.sendButton,
+                            text.trim().length === 0 && styles.sendButtonDisabled,
+                        ]}
+                        onPress={handleSend}
+                        disabled={text.trim().length === 0}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons
+                            name="arrow-up"
+                            size={20}
+                            color={text.trim().length === 0 ? "#666666" : "#ffffff"}
+                        />
+                    </TouchableOpacity>
+                </View>
+            )}
         </KeyboardAvoidingView>
     );
 }
@@ -94,5 +108,14 @@ const styles = StyleSheet.create({
     },
     sendButtonDisabled: {
         backgroundColor: "rgba(255, 255, 255, 0.1)",
+    },
+    lockedContainer: {
+        backgroundColor: "transparent",
+        paddingHorizontal: 0,
+        paddingVertical: 0,
+    },
+    newChatButton: {
+        width: "100%",
+        borderRadius: 24,
     },
 });
