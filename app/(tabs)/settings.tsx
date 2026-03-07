@@ -161,6 +161,12 @@ export default function SettingsScreen() {
                     <Text style={styles.sectionTitle}>Preferences</Text>
                     <View style={styles.settingsGroup}>
                         <SettingsItem
+                            icon="notifications-outline"
+                            title="Notifications"
+                            onPress={() => router.push("/notifications")}
+                        />
+                        <View style={styles.separator} />
+                        <SettingsItem
                             icon="flag-outline"
                             title="Goals"
                             onPress={handleGoalsPress}
