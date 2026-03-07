@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 interface AIChatHeaderProps {
     title: string;
@@ -18,6 +19,7 @@ export default function AIChatHeader({
     onNewConversation,
 }: AIChatHeaderProps) {
     const [menuVisible, setMenuVisible] = useState(false);
+    const router = useRouter();
 
     return (
         <View style={styles.header}>
@@ -83,6 +85,17 @@ export default function AIChatHeader({
                         >
                             <Ionicons name="trash-outline" size={24} color="#ff5526" />
                             <Text style={styles.sheetOptionTextDanger}>Delete Conversation</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            style={styles.sheetOption}
+                            onPress={() => {
+                                setMenuVisible(false);
+                                router.push("/weekly-digest");
+                            }}
+                        >
+                            <Ionicons name="calendar-outline" size={24} color="#ffffff" />
+                            <Text style={styles.sheetOptionText}>Weekly Digest</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity 

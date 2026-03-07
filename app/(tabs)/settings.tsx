@@ -153,6 +153,12 @@ export default function SettingsScreen() {
                                 thumbColor="#ffffff"
                             />
                         </SettingsItem>
+                        <View style={styles.separator} />
+                        <SettingsItem
+                            icon="calendar-outline"
+                            title="Weekly Digest"
+                            onPress={() => router.push("/weekly-digest")}
+                        />
                     </View>
                 </View>
 
