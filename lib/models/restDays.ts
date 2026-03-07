@@ -1,8 +1,10 @@
 import { db } from "../database";
+import { scheduleStreakNotification } from "../notifications";
 
 export async function addRestDay(date: string): Promise<void> {
     try {
         await db.runAsync("INSERT INTO rest_days (date) VALUES (?)", [date]);
+        await scheduleStreakNotification();
     } catch (e) {
         // Ignore unique constraint violations (duplicate dates)
         console.log("Rest day already exists or other error:", e);
@@ -11,6 +13,7 @@ export async function addRestDay(date: string): Promise<void> {
 
 export async function removeRestDay(date: string): Promise<void> {
     await db.runAsync("DELETE FROM rest_days WHERE date = ?", [date]);
+    await scheduleStreakNotification();
 }
 
 export async function getRestDays(

@@ -1,4 +1,5 @@
 import { db } from "../database";
+import { scheduleStreakNotification } from "../notifications";
 
 export interface Workout {
     id: number;
@@ -53,6 +54,7 @@ export async function createWorkout(
             workout.notes ?? null,
         ]
     );
+    await scheduleStreakNotification();
     return result.lastInsertRowId;
 }
 
@@ -103,10 +105,12 @@ export async function updateWorkout(
             id,
         ]
     );
+    await scheduleStreakNotification();
 }
 
 export async function deleteWorkout(id: number): Promise<void> {
     await db.runAsync("DELETE FROM workout WHERE id = ?", [id]);
+    await scheduleStreakNotification();
 }
 
 // Used for export
