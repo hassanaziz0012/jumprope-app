@@ -8,7 +8,7 @@ import { SyncToast } from "./components/SyncToast";
 import * as Sentry from '@sentry/react-native';
 import { Platform } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
-
+import { runSync } from "../lib/sync";
 
 Sentry.init({
   dsn: 'https://375656c4b25f5166691c77cc9968565a@o4510460628828160.ingest.de.sentry.io/4510634224648272',
@@ -41,6 +41,12 @@ export default Sentry.wrap(function RootLayout() {
             NavigationBar.setVisibilityAsync('hidden');
             NavigationBar.setBehaviorAsync('overlay-swipe');
         }
+
+        // Run sync in the background without blocking app startup
+        // using setTimeout to allow the app to render and interactions to finish
+        setTimeout(() => {
+            runSync().catch((err) => console.error("Background sync failed:", err));
+        }, 1500); // 1.5 seconds delay gives enough time for initial render
     }, []);
 
     return (
