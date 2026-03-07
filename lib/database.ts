@@ -64,6 +64,15 @@ export async function initDatabase(): Promise<void> {
       synced INTEGER DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS notification_settings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      streaks INTEGER DEFAULT 1,
+      motivation INTEGER DEFAULT 1,
+      weekly_summary_digest INTEGER DEFAULT 1,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 
     // Run database migrations
@@ -75,6 +84,7 @@ export * from "./models/userProfile";
 export * from "./models/workout";
 export * from "./models/goals";
 export * from "./models/charts";
+export * from "./models/notificationSettings";
 
 // Utility function to reset all data as unsynced
 export async function markAllDataAsUnsynced(): Promise<void> {

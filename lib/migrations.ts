@@ -85,6 +85,35 @@ const MIGRATIONS = [
             );
         }
     },
+    // Version 6: Add notification_settings table
+    async (db: SQLite.SQLiteDatabase) => {
+        await db.execAsync(`
+            CREATE TABLE IF NOT EXISTS notification_settings (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              user_id INTEGER NOT NULL,
+              streaks INTEGER DEFAULT 1,
+              motivation INTEGER DEFAULT 1,
+              weekly_summary_digest INTEGER DEFAULT 1,
+              updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        // Create default notification settings for existing users
+        const users = await db.getAllAsync<{ id: number }>(
+            "SELECT id FROM user_profile"
+        );
+        for (const user of users) {
+             const existing = await db.getFirstAsync(
+                 "SELECT id FROM notification_settings WHERE user_id = ?",
+                 [user.id]
+             );
+             if (!existing) {
+                 await db.runAsync(
+                     "INSERT INTO notification_settings (user_id) VALUES (?)",
+                     [user.id]
+                 );
+             }
+        }
+    },
 ];
 
 export async function runMigrations(db: SQLite.SQLiteDatabase) {
