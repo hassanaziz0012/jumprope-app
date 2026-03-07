@@ -11,8 +11,8 @@ interface AIToolCallCardProps {
     args?: Record<string, any>;
     completed?: boolean;
     status?: "pending" | "approved" | "rejected";
-    onApprove: (id: string) => void;
-    onReject: (id: string) => void;
+    onApprove?: (id: string) => void;
+    onReject?: (id: string) => void;
 }
 
 export default function AIToolCallCard({
@@ -58,7 +58,7 @@ export default function AIToolCallCard({
                     ))}
                 </View>
             )}
-            {status === "pending" && (
+            {status === "pending" && onApprove && onReject && (
                 <View style={styles.toolCallActions}>
                     <Button 
                         title="Reject" 
