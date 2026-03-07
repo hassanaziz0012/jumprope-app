@@ -13,6 +13,37 @@ function toYYYYMMDD(date: Date): string {
 }
 
 const STREAK_NOTIFICATION_ID = "streak_reminder";
+const WEEKLY_DIGEST_NOTIFICATION_ID = "weekly_digest_reminder";
+
+export async function scheduleWeeklyDigestNotification(): Promise<void> {
+    const hasPermission = await requestNotificationPermissions();
+    if (!hasPermission) return;
+
+    // First cancel existing scheduled notification
+    await Notifications.cancelScheduledNotificationAsync(WEEKLY_DIGEST_NOTIFICATION_ID);
+
+    const settings = await getNotificationSettings();
+
+    // If setting is off, just leave it cancelled and return
+    if (!settings?.weekly_summary_digest) return;
+
+    // Schedule weekly notification for every Sunday at 9:00 AM
+    await Notifications.scheduleNotificationAsync({
+        identifier: WEEKLY_DIGEST_NOTIFICATION_ID,
+        content: {
+            title: "Your Weekly Digest is ready! 📊",
+            body: "Read your weekly digest and see how you performed this week!",
+            sound: true,
+            data: { url: "/weekly-digest" },
+        },
+        trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+            weekday: 1, // Sunday (1 = Sunday in expo-notifications)
+            hour: 9,
+            minute: 0,
+        },
+    });
+}
 
 export async function requestNotificationPermissions(): Promise<boolean> {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();

@@ -15,7 +15,7 @@ import {
     NotificationSettings,
     updateNotificationSetting,
 } from "../lib/models/notificationSettings";
-import { scheduleStreakNotification } from "../lib/notifications";
+import { scheduleStreakNotification, scheduleWeeklyDigestNotification } from "../lib/notifications";
 import SettingsItem from "./components/SettingsItem";
 import { AnimatedToggle } from "./components/AnimatedToggle";
 
@@ -64,6 +64,9 @@ export default function NotificationsScreen() {
             await updateNotificationSetting(key, value);
             if (key === "streaks") {
                 await scheduleStreakNotification();
+            }
+            if (key === "weekly_summary_digest") {
+                await scheduleWeeklyDigestNotification();
             }
         } catch (error) {
             console.error(`Error updating ${key}:`, error);
@@ -121,7 +124,7 @@ export default function NotificationsScreen() {
 
                         <SettingsItem
                             icon="bulb-outline"
-                            title="Motivation"
+                            title="Motivation (in progress)"
                             subtitle="Receive encouraging messages to keep you going"
                             variant="custom"
                         >
