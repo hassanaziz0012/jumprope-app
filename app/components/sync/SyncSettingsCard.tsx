@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View, Pressable } from "react-native";
 import { AnimatedToggle } from "../AnimatedToggle";
+import { getRelativeTime } from "../../../lib/dates";
 
 type SyncSettingsCardProps = {
     syncEnabled: boolean;
@@ -30,7 +31,7 @@ export function SyncSettingsCard({
 
             <View style={styles.dateRow}>
                 <Text style={styles.dateValue}>
-                    Last: {lastSync ? new Date(lastSync).toLocaleString() : "Never"}
+                    Last: {lastSync ? getRelativeTime(lastSync) : "Never"}
                 </Text>
             </View>
 
