@@ -18,6 +18,22 @@ I designed this app with a couple simple rules in mind:
 
 ## Features
 
+### AI Training Coach
+
+Chat with an AI agent to get personalized jump rope training advice.
+
+<p float="left">
+  <img src="assets/app-demo-images/ai-coach-thumbnail.png" />
+</p>
+
+- **Personalized**: The AI can access your workouts, goals, and other data to give you personalized feedback.
+- **Capable**: Ask your agent to log your workouts or set your goals for you, all in natural language.
+- **History**: Wanna find that one insight in that one old chat? View your past conversations easily.
+
+#### Weekly Digest
+
+Each week, the AI agent can generate a personalized review of your performance, analyze your workouts, and extract key insights from your notes.
+
 ### Workout Logging
 
 Track everything about your jump rope sessions:
