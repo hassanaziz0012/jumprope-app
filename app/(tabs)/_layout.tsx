@@ -1,7 +1,35 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
+import { useEffect } from "react";
+import { getUserProfile } from "../../lib/database";
 
 export default function TabLayout() {
+    const router = useRouter();
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const checkProfile = async () => {
+            try {
+                // Short wait to ensure RootLayout's initDatabase() queues its execAsync first
+                await new Promise(resolve => setTimeout(resolve, 500));
+                const profile = await getUserProfile();
+
+                if (isMounted && (!profile || !profile.name)) {
+                    router.replace("/onboarding" as any);
+                }
+            } catch (error) {
+                console.error("Failed to check profile for onboarding:", error);
+            }
+        };
+
+        checkProfile();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
     return (
         <Tabs
             screenOptions={{

@@ -86,6 +86,10 @@ export default Sentry.wrap(function RootLayout() {
                         options={{ headerShown: false }}
                     />
                     <Stack.Screen
+                        name="onboarding"
+                        options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
                         name="log-workout"
                         options={{
                             presentation: "modal",
