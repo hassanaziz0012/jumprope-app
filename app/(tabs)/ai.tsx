@@ -15,6 +15,7 @@ import AIStatusMessage from "../components/ai/AIStatusMessage";
 import AIErrorMessage from "../components/ai/AIErrorMessage";
 import MessageLimitPill from "../components/ai/MessageLimitPill";
 import { useAIChat } from "../hooks/useAIChat";
+import { LIMITS } from "../../lib/constants";
 
 export default function AIScreen() {
     const [user, setUser] = useState<UserProfile | null>(null);
@@ -156,7 +157,7 @@ export default function AIScreen() {
 
             <AIChatInput 
                 onSend={handleSendMessage} 
-                locked={userMessageCount >= 10}
+                locked={userMessageCount >= LIMITS.AI_CHAT_MESSAGES}
                 onNewConversation={handleNewConversation}
             />
             

@@ -5,6 +5,7 @@ import { fetchConversationHistory, deleteConversation as deleteConversationApi }
 import { createWorkout } from "../../lib/models/workout";
 import { addRestDay } from "../../lib/models/restDays";
 import { updateGoal } from "../../lib/models/goals";
+import { LIMITS } from "../../lib/constants";
 
 export interface Message {
     id: string;
@@ -114,7 +115,7 @@ export function useAIChat() {
     const userMessageCount = messages.filter(m => m.type === "user_message").length;
 
     const sendMessage = async (text: string) => {
-        if (userMessageCount >= 10) return;
+        if (userMessageCount >= LIMITS.AI_CHAT_MESSAGES) return;
 
         // Add message to state
         const newMessage: Message = {

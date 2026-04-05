@@ -7,13 +7,14 @@ import Animated, {
     withTiming,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
+import { LIMITS } from "../../../lib/constants";
 
 interface MessageLimitPillProps {
     count: number;
     maxCount?: number;
 }
 
-export default function MessageLimitPill({ count, maxCount = 10 }: MessageLimitPillProps) {
+export default function MessageLimitPill({ count, maxCount = LIMITS.AI_CHAT_MESSAGES }: MessageLimitPillProps) {
     const translateY = useSharedValue(-100);
     const opacity = useSharedValue(0);
 
