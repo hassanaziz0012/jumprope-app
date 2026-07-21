@@ -159,6 +159,12 @@ export default function SettingsScreen() {
                             title="Weekly Digest"
                             onPress={() => router.push("/weekly-digest")}
                         />
+                        <View style={styles.separator} />
+                        <SettingsItem
+                            icon="key-outline"
+                            title="Models and API keys"
+                            onPress={() => router.push("/models-and-api-keys" as any)}
+                        />
                     </View>
                 </View>
 

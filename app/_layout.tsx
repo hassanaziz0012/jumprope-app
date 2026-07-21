@@ -122,6 +122,12 @@ export default Sentry.wrap(function RootLayout() {
                         }}
                     />
                     <Stack.Screen
+                        name="models-and-api-keys"
+                        options={{
+                            headerShown: false,
+                        }}
+                    />
+                    <Stack.Screen
                         name="export"
                         options={{
                             headerShown: false,
