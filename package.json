@@ -4,6 +4,7 @@
     "main": "./index.js",
     "version": "54.0.35",
     "scripts": {
+        "dev": "expo start --tunnel",
         "start": "expo start",
         "reset-project": "node ./scripts/reset-project.js",
         "android": "expo run:android",
