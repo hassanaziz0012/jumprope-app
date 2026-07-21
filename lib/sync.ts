@@ -11,9 +11,8 @@ import {
     setLastSync,
 } from "./database";
 import { setSyncState } from "./syncState";
+import { API_URL } from "./constants";
 
-// Define the API URL for the backend
-const API_URL = "https://jumprope-api.vercel.app";
 
 /**
  * Synchronize all workouts to the backend API.
@@ -46,10 +45,10 @@ export async function syncWorkouts() {
         if (!response.ok) {
             throw new Error(`Failed to sync workouts: ${response.statusText}`);
         }
-        
+
         const workoutIds = workouts.map(w => w.id);
         await markWorkoutsAsSynced(workoutIds);
-        
+
         console.log("Workouts synced successfully.");
     } catch (error) {
         console.error("Error syncing workouts:", error);
@@ -71,7 +70,7 @@ export async function syncGoals() {
         console.log("No unsynced goals found.");
         return;
     }
-    
+
     // Convert single goal object to a list of objects as requested
     const goalsList = [goals];
 
@@ -90,7 +89,7 @@ export async function syncGoals() {
         if (!response.ok) {
             throw new Error(`Failed to sync goals: ${response.statusText}`);
         }
-        
+
         await markGoalAsSynced(goals.id);
 
         console.log("Goals synced successfully.");
@@ -114,7 +113,7 @@ export async function syncRestDays() {
         console.log("No unsynced rest days found.");
         return;
     }
-    
+
     // Map array of strings to an array of objects
     const restDaysList = restDays.map(date => ({ date }));
 
@@ -133,7 +132,7 @@ export async function syncRestDays() {
         if (!response.ok) {
             throw new Error(`Failed to sync rest days: ${response.statusText}`);
         }
-        
+
         await markRestDaysAsSynced(restDays);
 
         console.log("Rest days synced successfully.");
@@ -173,7 +172,7 @@ export async function syncCharts() {
         if (!response.ok) {
             throw new Error(`Failed to sync charts: ${response.statusText}`);
         }
-        
+
         const chartIds = charts.map(c => c.id);
         await markChartsAsSynced(chartIds);
 
@@ -202,6 +201,36 @@ export async function runSync() {
         console.error("Sync failed:", error);
         setSyncState(false, "Sync Failed");
         setTimeout(() => setSyncState(false, ""), 2000);
+    }
+}
+
+/**
+ * Synchronize user profile settings to the backend API.
+ * This includes the new 'ai_model' field as part of the serialized userProfile payload.
+ */
+export async function syncUserProfile() {
+    const userProfile = await getUserProfile();
+    if (!userProfile) {
+        console.error("No user profile found, cannot sync user profile.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/sync/user`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(userProfile),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to sync user profile: ${response.statusText}`);
+        }
+
+        console.log("User profile synced successfully.");
+    } catch (error) {
+        console.error("Error syncing user profile:", error);
     }
 }
 
