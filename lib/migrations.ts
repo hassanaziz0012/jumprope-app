@@ -114,6 +114,33 @@ const MIGRATIONS = [
              }
         }
     },
+    // Version 7: Add ai_provider and api_key to user_profile
+    async (db: SQLite.SQLiteDatabase) => {
+        const userInfo = await db.getAllAsync<{ name: string }>(
+            "PRAGMA table_info(user_profile)"
+        );
+        if (!userInfo.some((col) => col.name === "ai_provider")) {
+            await db.execAsync(
+                "ALTER TABLE user_profile ADD COLUMN ai_provider TEXT;"
+            );
+        }
+        if (!userInfo.some((col) => col.name === "api_key")) {
+            await db.execAsync(
+                "ALTER TABLE user_profile ADD COLUMN api_key TEXT;"
+            );
+        }
+    },
+    // Version 8: Add ai_model to user_profile
+    async (db: SQLite.SQLiteDatabase) => {
+        const userInfo = await db.getAllAsync<{ name: string }>(
+            "PRAGMA table_info(user_profile)"
+        );
+        if (!userInfo.some((col) => col.name === "ai_model")) {
+            await db.execAsync(
+                "ALTER TABLE user_profile ADD COLUMN ai_model TEXT;"
+            );
+        }
+    },
 ];
 
 export async function runMigrations(db: SQLite.SQLiteDatabase) {

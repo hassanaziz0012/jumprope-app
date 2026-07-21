@@ -1,12 +1,17 @@
 import { db } from "../database";
 import * as Crypto from "expo-crypto";
 
+export type AIProvider = 'Claude' | 'ChatGPT' | 'Gemini' | 'Groq' | 'Grok' | 'DeepSeek' | 'Mistral' | 'Ollama' | 'Cohere';
+
 export interface UserProfile {
     id: number;
     name: string;
     email: string | null;
     image: string | null;
     ai_enabled: boolean;
+    ai_provider: AIProvider | null;
+    api_key: string | null;
+    ai_model: string | null;
     synced: number;
     sync_enabled: boolean;
     last_sync: string | null;
@@ -30,12 +35,15 @@ export async function saveUserProfile(
     name: string,
     email?: string,
     image?: string,
-    aiEnabled?: boolean
+    aiEnabled?: boolean,
+    aiProvider?: AIProvider | null,
+    apiKey?: string | null,
+    aiModel?: string | null
 ): Promise<void> {
     const existing = await getUserProfile();
     if (existing) {
         await db.runAsync(
-            "UPDATE user_profile SET name = ?, email = ?, image = ?, ai_enabled = ?, synced = 0 WHERE id = ?",
+            "UPDATE user_profile SET name = ?, email = ?, image = ?, ai_enabled = ?, ai_provider = ?, api_key = ?, ai_model = ?, synced = 0 WHERE id = ?",
             [
                 name,
                 email ?? null,
@@ -47,13 +55,25 @@ export async function saveUserProfile(
                     : existing.ai_enabled
                     ? 1
                     : 0,
+                aiProvider !== undefined ? aiProvider : existing.ai_provider,
+                apiKey !== undefined ? apiKey : existing.api_key,
+                aiModel !== undefined ? aiModel : existing.ai_model,
                 existing.id,
             ]
         );
     } else {
         await db.runAsync(
-            "INSERT INTO user_profile (name, email, image, ai_enabled, sync_token) VALUES (?, ?, ?, ?, ?)",
-            [name, email ?? null, image ?? null, aiEnabled ? 1 : 0, Crypto.randomUUID()]
+            "INSERT INTO user_profile (name, email, image, ai_enabled, ai_provider, api_key, ai_model, sync_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                name,
+                email ?? null,
+                image ?? null,
+                aiEnabled ? 1 : 0,
+                aiProvider ?? null,
+                apiKey ?? null,
+                aiModel ?? null,
+                Crypto.randomUUID()
+            ]
         );
     }
 }
