@@ -58,7 +58,7 @@ export const formatToolArgs = (toolName: string, args: Record<string, any> | und
                 if (!isNaN(date.getTime())) {
                     formatted.push({ label: "Date", value: date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) });
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
         if (args.duration !== undefined) {
             const m = Math.floor(args.duration / 60);
@@ -88,7 +88,7 @@ export const formatToolArgs = (toolName: string, args: Record<string, any> | und
                         year: "numeric"
                     });
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
 
         if (key === "metric" && typeof value === "string") {
@@ -102,6 +102,7 @@ export const formatToolArgs = (toolName: string, args: Record<string, any> | und
 };
 
 import { getUserProfile } from "../models/userProfile";
+import { API_URL } from "../constants";
 
 export interface AskAgentCallbacks {
     onConversationId: (id?: string | null, title?: string | null) => void;
@@ -114,13 +115,13 @@ export interface AskAgentCallbacks {
 
 export const askAgent = async (text: string, conversation_id: string | null, callbacks: AskAgentCallbacks, continue_conversation: boolean = false) => {
     const profile = await getUserProfile();
-    const es = new EventSource("https://jumprope-api.vercel.app/ask-agent", {
+    const es = new EventSource(`${API_URL}/ask-agent`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
-            message: text, 
+        body: JSON.stringify({
+            message: text,
             sync_token: profile?.sync_token || null,
             conversation_id,
             continue_conversation
@@ -132,12 +133,12 @@ export const askAgent = async (text: string, conversation_id: string | null, cal
 
         try {
             const data = JSON.parse(event.data);
-            
+
             if (data.type === "conversation_id") {
                 callbacks.onConversationId(data.id, data.title);
                 return;
             }
-            
+
             if (data.type === "status") {
                 callbacks.onStatus(data.message);
             } else if (data.type === "tool_call") {
@@ -164,7 +165,7 @@ export const askAgent = async (text: string, conversation_id: string | null, cal
         if (error && error.type === "error" && error.message && error.message.includes("closed")) {
             return;
         }
-        
+
         callbacks.onError("Sorry, I encountered an error communicating with the server.");
         es.close();
     });

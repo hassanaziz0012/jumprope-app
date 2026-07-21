@@ -1,10 +1,11 @@
 import EventSource from "react-native-sse";
 import { getUserProfile } from "../models/userProfile";
 import type { AskAgentCallbacks } from "./ask";
+import { API_URL } from "../constants";
 
 export const generateWeeklyDigest = async (callbacks: AskAgentCallbacks) => {
     const profile = await getUserProfile();
-    const es = new EventSource("https://jumprope-api.vercel.app/generate-weekly-digest", {
+    const es = new EventSource(`${API_URL}/generate-weekly-digest`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

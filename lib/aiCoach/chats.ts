@@ -1,4 +1,5 @@
 import { getUserProfile } from "../database";
+import { API_URL } from "../constants";
 
 export interface BackendToolCall {
     name?: string;
@@ -29,8 +30,8 @@ export async function fetchConversationHistory(conversationId: string): Promise<
         throw new Error("No sync token found for user");
     }
 
-    const response = await fetch(`https://jumprope-api.vercel.app/conversations/${conversationId}?sync_token=${profile.sync_token}`);
-    
+    const response = await fetch(`${API_URL}/conversations/${conversationId}?sync_token=${profile.sync_token}`);
+
     if (!response.ok) {
         const errorText = await response.text().catch(() => "Unknown error");
         throw new Error(`Failed to fetch conversation history: ${response.status} - ${errorText}`);
@@ -46,10 +47,10 @@ export async function deleteConversation(conversationId: string): Promise<void> 
         throw new Error("No sync token found for user");
     }
 
-    const response = await fetch(`https://jumprope-api.vercel.app/conversations/${conversationId}/delete?sync_token=${profile.sync_token}`, {
+    const response = await fetch(`${API_URL}/conversations/${conversationId}/delete?sync_token=${profile.sync_token}`, {
         method: "DELETE",
     });
-    
+
     if (!response.ok) {
         const errorText = await response.text().catch(() => "Unknown error");
         throw new Error(`Failed to delete conversation: ${response.status} - ${errorText}`);

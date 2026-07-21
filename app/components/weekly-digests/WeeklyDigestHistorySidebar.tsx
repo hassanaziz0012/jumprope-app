@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Dimensi
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { getUserProfile } from "../../../lib/models/userProfile";
+import { API_URL } from "../../../lib/constants";
 
 interface WeeklyDigest {
     created_at: string;
@@ -56,7 +57,7 @@ export default function WeeklyDigestHistorySidebar({ isOpen, onClose }: WeeklyDi
                 return;
             }
 
-            const response = await fetch(`https://jumprope-api.vercel.app/weekly-digests?sync_token=${profile.sync_token}`);
+            const response = await fetch(`${API_URL}/weekly-digests?sync_token=${profile.sync_token}`);
 
             if (!response.ok) {
                 console.error("Failed to fetch weekly digests", response.status);

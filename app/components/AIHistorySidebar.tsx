@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Dimensions, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getUserProfile } from "../../lib/database";
+import { API_URL } from "../../lib/constants";
 
 interface Conversation {
     id: string;
@@ -58,12 +59,12 @@ export default function AIHistorySidebar({ isOpen, onClose, onSelectConversation
                 return;
             }
 
-            const response = await fetch(`https://jumprope-api.vercel.app/conversations?sync_token=${profile.sync_token}`);
+            const response = await fetch(`${API_URL}/conversations?sync_token=${profile.sync_token}`);
 
             if (!response.ok) {
-                 console.error("Failed to fetch conversations", response.status);
-                 setLoading(false);
-                 return;
+                console.error("Failed to fetch conversations", response.status);
+                setLoading(false);
+                return;
             }
             const data: Conversation[] = await response.json();
             setConversations(data);
@@ -78,13 +79,13 @@ export default function AIHistorySidebar({ isOpen, onClose, onSelectConversation
     const groupConversations = (conversationsList: Conversation[]) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
-        
+
         const last7Days = new Date(today);
         last7Days.setDate(last7Days.getDate() - 7);
-        
+
         const last30Days = new Date(today);
         last30Days.setDate(last30Days.getDate() - 30);
 
@@ -98,7 +99,7 @@ export default function AIHistorySidebar({ isOpen, onClose, onSelectConversation
 
         conversationsList.forEach(conv => {
             const updatedDate = new Date(conv.updated_at);
-            
+
             if (updatedDate >= today) {
                 groups["Today"].push(conv);
             } else if (updatedDate >= yesterday) {
@@ -162,7 +163,7 @@ export default function AIHistorySidebar({ isOpen, onClose, onSelectConversation
                     </View>
                 ) : (
                     <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.newConversationItem}
                             onPress={() => {
                                 onClose();
