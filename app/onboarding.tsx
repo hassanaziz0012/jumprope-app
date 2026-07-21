@@ -81,8 +81,7 @@ export default function OnboardingScreen() {
                     </View>
                     <Text style={styles.title}>Welcome to Jumprope</Text>
                     <Text style={styles.subtitle}>
-                        This is a quick onboarding flow to help setup your profile.
-                        Once you're done, you can use the app like a normal user to log and track your workouts!
+                        {"This is a quick onboarding flow to help setup your profile. Once you're done, you can use the app like a normal user to log and track your workouts!"}
                     </Text>
                 </View>
 

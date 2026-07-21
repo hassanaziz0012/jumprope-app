@@ -98,9 +98,7 @@ export default function NotificationsScreen() {
                     showsVerticalScrollIndicator={false}
                 >
                     <Text style={styles.sectionDescription}>
-                        Here you can select which notifications you'd like to
-                        receive from this app. Please note that some notifications
-                        (like the "Weekly Digest") require AI features to use.
+                        {"Here you can select which notifications you'd like to receive from this app. Please note that some notifications (like the \"Weekly Digest\") require AI features to use."}
                     </Text>
 
                     <View style={styles.settingsGroup}>
