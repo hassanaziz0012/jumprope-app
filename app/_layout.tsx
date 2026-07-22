@@ -2,11 +2,11 @@ import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef } from "react";
-import { initDatabase, getUserProfile } from "../lib/database";
+import { initDatabase } from "../lib/database";
 import { scheduleStreakNotification, scheduleWeeklyDigestNotification } from "../lib/notifications";
 import { SyncToast } from "./components/SyncToast";
 import * as Sentry from '@sentry/react-native';
-import { Platform } from 'react-native';
+import { Platform, StatusBar as RNStatusBar } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import { runSync } from "../lib/sync";
 import * as Notifications from "expo-notifications";
@@ -41,6 +41,10 @@ export default Sentry.wrap(function RootLayout() {
         initDatabase();
         scheduleStreakNotification();
         scheduleWeeklyDigestNotification();
+        
+        // Hide status bar natively at runtime
+        RNStatusBar.setHidden(true, 'none');
+
         if (Platform.OS === 'android') {
             NavigationBar.setPositionAsync('absolute');
             NavigationBar.setVisibilityAsync('hidden');
@@ -68,7 +72,7 @@ export default Sentry.wrap(function RootLayout() {
 
     return (
         <>
-            <StatusBar hidden />
+            <StatusBar hidden={true} />
             <ThemeProvider value={CustomDarkTheme}>
                 <Stack
                     screenOptions={{

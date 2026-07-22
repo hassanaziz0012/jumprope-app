@@ -31,6 +31,12 @@
         "plugins": [
             "expo-router",
             [
+                "expo-status-bar",
+                {
+                    "hidden": true
+                }
+            ],
+            [
                 "expo-splash-screen",
                 {
                     "image": "./assets/images/icon.png",
