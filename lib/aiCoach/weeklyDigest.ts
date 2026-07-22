@@ -2,6 +2,7 @@ import EventSource from "react-native-sse";
 import { getUserProfile } from "../models/userProfile";
 import type { AskAgentCallbacks } from "./ask";
 import { API_URL } from "../constants";
+import { showToast } from "../toastState";
 
 export const generateWeeklyDigest = async (callbacks: AskAgentCallbacks) => {
     const profile = await getUserProfile();
@@ -36,7 +37,9 @@ export const generateWeeklyDigest = async (callbacks: AskAgentCallbacks) => {
                 callbacks.onFinalResponse(data.text);
                 es.close();
             } else if (data.type === "error") {
-                callbacks.onError(data.message);
+                const errMsg = data.message || "An error occurred generating weekly digest.";
+                showToast(errMsg, "error");
+                callbacks.onError(errMsg);
                 es.close();
             } else if (data.type === "close") {
                 es.close();
@@ -52,7 +55,9 @@ export const generateWeeklyDigest = async (callbacks: AskAgentCallbacks) => {
             return;
         }
 
-        callbacks.onError("Sorry, I encountered an error generating your weekly digest.");
+        const errMsg = "Sorry, I encountered an error generating your weekly digest.";
+        showToast(errMsg, "error");
+        callbacks.onError(errMsg);
         es.close();
     });
 

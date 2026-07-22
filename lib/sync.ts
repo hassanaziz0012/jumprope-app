@@ -11,8 +11,7 @@ import {
     setLastSync,
 } from "./database";
 import { setSyncState } from "./syncState";
-import { API_URL } from "./constants";
-
+import { apiClient } from "./apiClient";
 
 /**
  * Synchronize all workouts to the backend API.
@@ -31,20 +30,12 @@ export async function syncWorkouts() {
     }
 
     try {
-        const response = await fetch(`${API_URL}/sync/workouts`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
+        await apiClient("/sync/workouts", {
+            body: {
                 user: userProfile,
                 data: workouts,
-            }),
+            },
         });
-
-        if (!response.ok) {
-            throw new Error(`Failed to sync workouts: ${response.statusText}`);
-        }
 
         const workoutIds = workouts.map(w => w.id);
         await markWorkoutsAsSynced(workoutIds);
@@ -75,20 +66,12 @@ export async function syncGoals() {
     const goalsList = [goals];
 
     try {
-        const response = await fetch(`${API_URL}/sync/goals`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
+        await apiClient("/sync/goals", {
+            body: {
                 user: userProfile,
                 data: goalsList,
-            }),
+            },
         });
-
-        if (!response.ok) {
-            throw new Error(`Failed to sync goals: ${response.statusText}`);
-        }
 
         await markGoalAsSynced(goals.id);
 
@@ -118,20 +101,12 @@ export async function syncRestDays() {
     const restDaysList = restDays.map(date => ({ date }));
 
     try {
-        const response = await fetch(`${API_URL}/sync/rest-days`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
+        await apiClient("/sync/rest-days", {
+            body: {
                 user: userProfile,
                 data: restDaysList,
-            }),
+            },
         });
-
-        if (!response.ok) {
-            throw new Error(`Failed to sync rest days: ${response.statusText}`);
-        }
 
         await markRestDaysAsSynced(restDays);
 
@@ -158,20 +133,12 @@ export async function syncCharts() {
     }
 
     try {
-        const response = await fetch(`${API_URL}/sync/charts`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
+        await apiClient("/sync/charts", {
+            body: {
                 user: userProfile,
                 data: charts,
-            }),
+            },
         });
-
-        if (!response.ok) {
-            throw new Error(`Failed to sync charts: ${response.statusText}`);
-        }
 
         const chartIds = charts.map(c => c.id);
         await markChartsAsSynced(chartIds);
@@ -216,17 +183,9 @@ export async function syncUserProfile() {
     }
 
     try {
-        const response = await fetch(`${API_URL}/sync/user`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(userProfile),
+        await apiClient("/sync/user", {
+            body: userProfile,
         });
-
-        if (!response.ok) {
-            throw new Error(`Failed to sync user profile: ${response.statusText}`);
-        }
 
         console.log("User profile synced successfully.");
     } catch (error) {
@@ -246,13 +205,7 @@ export async function deleteUserData(): Promise<any> {
         throw new Error("No sync token found for the user");
     }
 
-    const response = await fetch(`${API_URL}/sync/delete-user-data?sync_token=${userProfile.sync_token}`, {
+    return await apiClient(`/sync/delete-user-data?sync_token=${userProfile.sync_token}`, {
         method: "DELETE",
     });
-
-    if (!response.ok) {
-        throw new Error(`Failed to delete user data: ${response.statusText}`);
-    }
-
-    return await response.json();
 }

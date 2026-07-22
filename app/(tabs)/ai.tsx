@@ -68,7 +68,7 @@ export default function AIScreen() {
                     </View>
                     <Text style={styles.emptyStateTitle}>AI Coach</Text>
                     <Text style={styles.emptyStateSubtitle}>
-                        Your personal jump rope coach, powered by Gemini. Get 
+                        Your personal jump rope coach, powered by AI. Get 
                         personalized workout insights and goals.
                     </Text>
                     <Button 
@@ -111,7 +111,7 @@ export default function AIScreen() {
                 {messages.length === 0 ? (
                     <View style={styles.greetingContainer}>
                         <View style={styles.greetingHeader}>
-                            <View style={styles.geminiIcon}>
+                        <View style={styles.aiIcon}>
                                 <Ionicons name="sparkles" size={32} color="#ffffff" />
                             </View>
                             <Text style={styles.greetingHello}>Hello, <Text style={styles.greetingName}>{user.name}!</Text></Text>
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginBottom: 20,
     },
-    geminiIcon: {
+    aiIcon: {
         width: 64,
         height: 64,
         borderRadius: 32,

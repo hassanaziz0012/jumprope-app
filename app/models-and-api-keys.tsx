@@ -14,7 +14,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getUserProfile, saveUserProfile, type AIProvider } from "../lib/database";
 import { syncUserProfile } from "../lib/sync";
-import { API_URL } from "../lib/constants";
+import { apiClient } from "../lib/apiClient";
 import Button from "./components/Button";
 
 const PROVIDERS = [
@@ -58,11 +58,7 @@ export default function ModelsAndApiKeysScreen() {
         setIsModelsLoading(true);
         setModelsError(null);
         try {
-            const response = await fetch(`${API_URL}/models/available`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
+            const data = await apiClient("/models/available");
             const key = provider.toLowerCase();
             const models = data[key] || [];
             setAvailableModels(models);

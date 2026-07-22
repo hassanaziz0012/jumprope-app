@@ -6,7 +6,6 @@ import {
     Text,
     View,
     ScrollView,
-    Linking,
 } from "react-native";
 import Button from "./Button";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,10 +22,10 @@ export default function AIConsentModal({
     onCancel,
 }: AIConsentModalProps) {
     const [agreedApp, setAgreedApp] = useState(false);
-    const [agreedGoogle, setAgreedGoogle] = useState(false);
+    const [agreedProvider, setAgreedProvider] = useState(false);
 
     const handleConsent = () => {
-        if (agreedApp && agreedGoogle) {
+        if (agreedApp && agreedProvider) {
             onConsent();
         }
     };
@@ -50,18 +49,18 @@ export default function AIConsentModal({
                         <Text style={styles.message}>
                             AI features are completely optional. If you do
                             decide to use the AI coach, your workout training
-                            data and history will be sent to Google servers so you can use Google Gemini to provide AI features.
+                            data and history will be sent to the AI provider
+                            you select to provide AI features.
                         </Text>
                         <Text style={styles.message}>
                             If you consent to this then enable AI; otherwise the
                             base app features will work offline and locally
                             regardless of whether you use AI or not.
                         </Text>
-                        <Pressable onPress={() => Linking.openURL('https://ai.google.dev/gemini-api/terms')}>
-                            <Text style={styles.link}>
-                                Google Gemini Privacy Policy and Terms of Service
-                            </Text>
-                        </Pressable>
+                        <Text style={styles.message}>
+                            Please make sure you read and understand the privacy
+                            policy and terms of service of your chosen provider.
+                        </Text>
                         
                         <Pressable 
                             style={styles.checkboxContainer} 
@@ -79,15 +78,15 @@ export default function AIConsentModal({
                         
                         <Pressable 
                             style={styles.checkboxContainer} 
-                            onPress={() => setAgreedGoogle(!agreedGoogle)}
+                            onPress={() => setAgreedProvider(!agreedProvider)}
                         >
                             <Ionicons 
-                                name={agreedGoogle ? "checkbox" : "square-outline"} 
+                                name={agreedProvider ? "checkbox" : "square-outline"} 
                                 size={24} 
-                                color={agreedGoogle ? "#ccfa53" : "#a0a0a0"} 
+                                color={agreedProvider ? "#ccfa53" : "#a0a0a0"} 
                             />
                             <Text style={styles.checkboxLabel}>
-                                I agree to let Google Gemini process my workout data to enable AI features.
+                                I agree to let my selected AI provider process my workout data to enable AI features.
                             </Text>
                         </Pressable>
                     </ScrollView>
@@ -103,7 +102,7 @@ export default function AIConsentModal({
                             onPress={handleConsent}
                             variant="primary"
                             style={styles.button}
-                            disabled={!agreedApp || !agreedGoogle}
+                            disabled={!agreedApp || !agreedProvider}
                         />
                     </View>
                 </Pressable>
@@ -154,13 +153,6 @@ const styles = StyleSheet.create({
         textAlign: "center",
         lineHeight: 22,
         marginBottom: 12,
-    },
-    link: {
-        fontSize: 15,
-        color: "#ccfa53",
-        textAlign: "center",
-        textDecorationLine: "underline",
-        marginBottom: 24,
     },
     checkboxContainer: {
         flexDirection: "row",

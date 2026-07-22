@@ -103,6 +103,7 @@ export const formatToolArgs = (toolName: string, args: Record<string, any> | und
 
 import { getUserProfile } from "../models/userProfile";
 import { API_URL } from "../constants";
+import { showToast } from "../toastState";
 
 export interface AskAgentCallbacks {
     onConversationId: (id?: string | null, title?: string | null) => void;
@@ -149,7 +150,9 @@ export const askAgent = async (text: string, conversation_id: string | null, cal
                 callbacks.onFinalResponse(data.text);
                 es.close();
             } else if (data.type === "error") {
-                callbacks.onError(data.message);
+                const errMsg = data.message || "An error occurred during communication.";
+                showToast(errMsg, "error");
+                callbacks.onError(errMsg);
                 es.close();
             } else if (data.type === "close") {
                 es.close();
@@ -166,7 +169,9 @@ export const askAgent = async (text: string, conversation_id: string | null, cal
             return;
         }
 
-        callbacks.onError("Sorry, I encountered an error communicating with the server.");
+        const errMsg = "Sorry, I encountered an error communicating with the server.";
+        showToast(errMsg, "error");
+        callbacks.onError(errMsg);
         es.close();
     });
 

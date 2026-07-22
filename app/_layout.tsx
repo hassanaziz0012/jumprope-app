@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { initDatabase } from "../lib/database";
 import { scheduleStreakNotification, scheduleWeeklyDigestNotification } from "../lib/notifications";
 import { SyncToast } from "./components/SyncToast";
+import { ApiToast } from "./components/ApiToast";
 import * as Sentry from '@sentry/react-native';
 import { Platform, StatusBar as RNStatusBar } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';

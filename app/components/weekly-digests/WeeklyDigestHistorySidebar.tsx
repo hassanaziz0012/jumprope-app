@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Dimensi
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { getUserProfile } from "../../../lib/models/userProfile";
-import { API_URL } from "../../../lib/constants";
+import { apiClient } from "../../../lib/apiClient";
 
 interface WeeklyDigest {
     created_at: string;
@@ -20,8 +20,8 @@ interface WeeklyDigestHistorySidebarProps {
     onClose: () => void;
 }
 
-const { width } = Dimensions.get("window");
-const SIDEBAR_WIDTH = Math.min(width * 0.8, 320);
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const SIDEBAR_WIDTH = Math.min(SCREEN_WIDTH * 0.8, 320);
 
 export default function WeeklyDigestHistorySidebar({ isOpen, onClose }: WeeklyDigestHistorySidebarProps) {
     const [slideAnim] = useState(new Animated.Value(SIDEBAR_WIDTH));
@@ -57,14 +57,7 @@ export default function WeeklyDigestHistorySidebar({ isOpen, onClose }: WeeklyDi
                 return;
             }
 
-            const response = await fetch(`${API_URL}/weekly-digests?sync_token=${profile.sync_token}`);
-
-            if (!response.ok) {
-                console.error("Failed to fetch weekly digests", response.status);
-                setLoading(false);
-                return;
-            }
-            const data: WeeklyDigest[] = await response.json();
+            const data: WeeklyDigest[] = await apiClient<WeeklyDigest[]>(`/weekly-digests?sync_token=${profile.sync_token}`);
             setDigests(data);
             groupDigestsByMonth(data);
         } catch (error) {

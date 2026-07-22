@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Dimensions, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getUserProfile } from "../../lib/database";
-import { API_URL } from "../../lib/constants";
+import { apiClient } from "../../lib/apiClient";
 
 interface Conversation {
     id: string;
@@ -59,14 +59,9 @@ export default function AIHistorySidebar({ isOpen, onClose, onSelectConversation
                 return;
             }
 
-            const response = await fetch(`${API_URL}/conversations?sync_token=${profile.sync_token}`);
-
-            if (!response.ok) {
-                console.error("Failed to fetch conversations", response.status);
-                setLoading(false);
-                return;
-            }
-            const data: Conversation[] = await response.json();
+            const data: Conversation[] = await apiClient<Conversation[]>(
+                `/conversations?sync_token=${profile.sync_token}`
+            );
             setConversations(data);
             groupConversations(data);
         } catch (error) {
