@@ -69,7 +69,14 @@
           }
         }
       ],
-      "@sentry/react-native",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "jumprope-app",
+          "organization": "hassan-ov1"
+        }
+      ],
       "expo-font",
       "expo-web-browser"
     ],
