@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getUserProfile, saveUserProfile } from "../lib/database";
+import { apiClient } from "../lib/apiClient";
 import Button from "./components/Button";
 
 export default function ProfileScreen() {
@@ -24,6 +25,18 @@ export default function ProfileScreen() {
     const [email, setEmail] = useState("");
     const [imageUri, setImageUri] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+
+    // Password change state
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
+    const [passwordStatusMsg, setPasswordStatusMsg] = useState<{
+        text: string;
+        type: "success" | "error";
+    } | null>(null);
 
     useEffect(() => {
         loadProfile();
@@ -109,6 +122,68 @@ export default function ProfileScreen() {
         }
     };
 
+    const handleChangePassword = async () => {
+        setPasswordStatusMsg(null);
+        if (!email.trim()) {
+            setPasswordStatusMsg({
+                text: "Please set your email address first to change password.",
+                type: "error",
+            });
+            return;
+        }
+        if (!currentPassword) {
+            setPasswordStatusMsg({
+                text: "Please enter your current password.",
+                type: "error",
+            });
+            return;
+        }
+        if (!newPassword || newPassword.length < 8) {
+            setPasswordStatusMsg({
+                text: "New password must be at least 8 characters long.",
+                type: "error",
+            });
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            setPasswordStatusMsg({
+                text: "New passwords do not match.",
+                type: "error",
+            });
+            return;
+        }
+
+        setIsChangingPassword(true);
+        try {
+            await apiClient("/auth/change-password", {
+                method: "POST",
+                body: {
+                    email: email.trim(),
+                    current_password: currentPassword,
+                    new_password: newPassword,
+                },
+                suppressToast: true,
+                throwOnError: true,
+            });
+
+            setPasswordStatusMsg({
+                text: "Password updated successfully!",
+                type: "success",
+            });
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+        } catch (error: any) {
+            const msg =
+                error.data?.detail ||
+                error.message ||
+                "Failed to change password.";
+            setPasswordStatusMsg({ text: msg, type: "error" });
+        } finally {
+            setIsChangingPassword(false);
+        }
+    };
+
     const handleBack = () => {
         router.back();
     };
@@ -183,6 +258,112 @@ export default function ProfileScreen() {
                         />
                     </View>
                 </View>
+
+                {/* Change Password Section */}
+                <View style={styles.sectionHeaderContainer}>
+                    <Text style={styles.sectionTitle}>Change Password</Text>
+                </View>
+
+                <View style={styles.form}>
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Current Password</Text>
+                        <View style={styles.passwordInputContainer}>
+                            <TextInput
+                                style={styles.passwordInput}
+                                value={currentPassword}
+                                onChangeText={setCurrentPassword}
+                                placeholder="Enter current password"
+                                placeholderTextColor="#666666"
+                                secureTextEntry={!showCurrentPassword}
+                                autoCapitalize="none"
+                            />
+                            <Pressable
+                                onPress={() =>
+                                    setShowCurrentPassword(!showCurrentPassword)
+                                }
+                                style={styles.eyeIcon}
+                            >
+                                <Ionicons
+                                    name={
+                                        showCurrentPassword ? "eye-off" : "eye"
+                                    }
+                                    size={20}
+                                    color="#666666"
+                                />
+                            </Pressable>
+                        </View>
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>New Password</Text>
+                        <View style={styles.passwordInputContainer}>
+                            <TextInput
+                                style={styles.passwordInput}
+                                value={newPassword}
+                                onChangeText={setNewPassword}
+                                placeholder="Enter new password (min 8 chars)"
+                                placeholderTextColor="#666666"
+                                secureTextEntry={!showNewPassword}
+                                autoCapitalize="none"
+                            />
+                            <Pressable
+                                onPress={() =>
+                                    setShowNewPassword(!showNewPassword)
+                                }
+                                style={styles.eyeIcon}
+                            >
+                                <Ionicons
+                                    name={showNewPassword ? "eye-off" : "eye"}
+                                    size={20}
+                                    color="#666666"
+                                />
+                            </Pressable>
+                        </View>
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Confirm New Password</Text>
+                        <View style={styles.passwordInputContainer}>
+                            <TextInput
+                                style={styles.passwordInput}
+                                value={confirmPassword}
+                                onChangeText={setConfirmPassword}
+                                placeholder="Confirm new password"
+                                placeholderTextColor="#666666"
+                                secureTextEntry={!showNewPassword}
+                                autoCapitalize="none"
+                            />
+                        </View>
+                    </View>
+
+                    {passwordStatusMsg && (
+                        <Text
+                            style={[
+                                styles.statusText,
+                                passwordStatusMsg.type === "success"
+                                    ? styles.statusSuccess
+                                    : styles.statusError,
+                            ]}
+                        >
+                            {passwordStatusMsg.text}
+                        </Text>
+                    )}
+
+                    <Button
+                        title={
+                            isChangingPassword
+                                ? "Updating Password..."
+                                : "Update Password"
+                        }
+                        onPress={handleChangePassword}
+                        disabled={
+                            !currentPassword ||
+                            !newPassword ||
+                            !confirmPassword ||
+                            isChangingPassword
+                        }
+                    />
+                </View>
             </ScrollView>
 
             {/* Save Button */}
@@ -230,6 +411,7 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         paddingHorizontal: 20,
+        paddingBottom: 32,
     },
     avatarSection: {
         alignItems: "center",
@@ -288,6 +470,44 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "#ffffff",
     },
+    sectionHeaderContainer: {
+        marginTop: 32,
+        marginBottom: 16,
+        borderTopWidth: 1,
+        borderTopColor: "#1a1a1a",
+        paddingTop: 24,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: "600",
+        color: "#ffffff",
+    },
+    passwordInputContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#1a1a1a",
+        borderRadius: 12,
+        paddingHorizontal: 16,
+    },
+    passwordInput: {
+        flex: 1,
+        paddingVertical: 14,
+        fontSize: 16,
+        color: "#ffffff",
+    },
+    eyeIcon: {
+        padding: 4,
+    },
+    statusText: {
+        fontSize: 14,
+        marginTop: 4,
+    },
+    statusSuccess: {
+        color: "#4cd964",
+    },
+    statusError: {
+        color: "#ff3b30",
+    },
     footer: {
         paddingHorizontal: 20,
         paddingTop: 16,
@@ -295,3 +515,4 @@ const styles = StyleSheet.create({
         borderTopColor: "#1a1a1a",
     },
 });
+

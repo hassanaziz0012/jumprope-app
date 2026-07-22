@@ -7,6 +7,9 @@
         "development": {
             "developmentClient": true,
             "distribution": "internal",
+            "env": {
+                "EXPO_PUBLIC_API_URL": "https://jumprope-api.vercel.app"
+            },
             "android": {
                 "image": "latest"
             },
@@ -16,6 +19,9 @@
         },
         "development-simulator": {
             "extends": "development",
+            "env": {
+                "EXPO_PUBLIC_API_URL": "https://jumprope-api.vercel.app"
+            },
             "ios": {
                 "simulator": true
             }
@@ -23,6 +29,9 @@
         "preview": {
             "distribution": "internal",
             "channel": "main",
+            "env": {
+                "EXPO_PUBLIC_API_URL": "https://jumprope-api.vercel.app"
+            },
             "android": {
                 "image": "latest"
             },
@@ -32,12 +41,18 @@
         },
         "apk": {
             "extends": "preview",
+            "env": {
+                "EXPO_PUBLIC_API_URL": "https://jumprope-api.vercel.app"
+            },
             "android": {
                 "buildType": "apk"
             }
         },
         "production-apk": {
             "extends": "production",
+            "env": {
+                "EXPO_PUBLIC_API_URL": "https://jumprope-api.vercel.app"
+            },
             "android": {
                 "buildType": "apk"
             }
@@ -45,6 +60,9 @@
         "production": {
             "channel": "production",
             "autoIncrement": true,
+            "env": {
+                "EXPO_PUBLIC_API_URL": "https://jumprope-api.vercel.app"
+            },
             "android": {
                 "image": "latest"
             },

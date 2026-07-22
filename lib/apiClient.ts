@@ -1,10 +1,12 @@
 import { API_URL } from "./constants";
 import { showToast } from "./toastState";
+import { handleAccountNotFound } from "./sync";
 
 export interface ApiClientOptions extends Omit<RequestInit, "body"> {
     body?: any;
     timeoutMs?: number; // Default 10000ms
     suppressToast?: boolean; // Default false
+    throwOnError?: boolean; // Default false
 }
 
 export class ApiClientError extends Error {
@@ -35,14 +37,25 @@ export class ApiClientError extends Error {
  * Universal API request function for backend API communication.
  * Handles timeouts, network disconnections, non-2xx status codes,
  * and notifies users automatically via Toast notification on errors.
+ *
+ * Does not throw by default unless throwOnError: true is passed.
  */
 export async function apiClient<T = any>(
     endpointOrUrl: string,
+    options: ApiClientOptions & { throwOnError: true }
+): Promise<T>;
+export async function apiClient<T = any>(
+    endpointOrUrl: string,
+    options?: ApiClientOptions
+): Promise<T | null>;
+export async function apiClient<T = any>(
+    endpointOrUrl: string,
     options: ApiClientOptions = {}
-): Promise<T> {
+): Promise<T | null> {
     const {
         timeoutMs = 10000,
         suppressToast = false,
+        throwOnError = false,
         headers = {},
         body,
         method: methodOption,
@@ -124,10 +137,23 @@ export async function apiClient<T = any>(
                 showToast(formattedMsg, "error");
             }
 
-            throw new ApiClientError(formattedMsg, {
-                status: response.status,
-                data: responseData,
-            });
+            if (
+                response.status === 404 ||
+                (typeof errorDetail === "string" &&
+                    (errorDetail.includes("User account not found") ||
+                        errorDetail.includes("User not found")))
+            ) {
+                handleAccountNotFound();
+            }
+
+            if (throwOnError) {
+                throw new ApiClientError(formattedMsg, {
+                    status: response.status,
+                    data: responseData,
+                });
+            }
+
+            return null;
         }
 
         // Handle empty or 204 No Content response
@@ -148,9 +174,10 @@ export async function apiClient<T = any>(
     } catch (error: any) {
         if (timeoutId) clearTimeout(timeoutId);
 
-        // If it's already an ApiClientError, rethrow
+        // If it's already an ApiClientError, rethrow only if throwOnError is true
         if (error instanceof ApiClientError) {
-            throw error;
+            if (throwOnError) throw error;
+            return null;
         }
 
         let errorMessage = "An unexpected error occurred.";
@@ -175,9 +202,13 @@ export async function apiClient<T = any>(
             showToast(errorMessage, "error");
         }
 
-        throw new ApiClientError(errorMessage, {
-            isTimeout,
-            isNetworkError,
-        });
+        if (throwOnError) {
+            throw new ApiClientError(errorMessage, {
+                isTimeout,
+                isNetworkError,
+            });
+        }
+
+        return null;
     }
 }

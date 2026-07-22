@@ -24,7 +24,7 @@ export interface ConversationHistoryResponse {
     messages: BackendMessage[];
 }
 
-export async function fetchConversationHistory(conversationId: string): Promise<ConversationHistoryResponse> {
+export async function fetchConversationHistory(conversationId: string): Promise<ConversationHistoryResponse | null> {
     const profile = await getUserProfile();
     if (!profile?.sync_token) {
         throw new Error("No sync token found for user");

@@ -7,10 +7,16 @@ import { scheduleStreakNotification, scheduleWeeklyDigestNotification } from "..
 import { SyncToast } from "./components/SyncToast";
 import { ApiToast } from "./components/ApiToast";
 import * as Sentry from '@sentry/react-native';
-import { Platform, StatusBar as RNStatusBar } from 'react-native';
+import { Platform, StatusBar as RNStatusBar, LogBox } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import { runSync } from "../lib/sync";
 import * as Notifications from "expo-notifications";
+
+LogBox.ignoreLogs([
+    "User account not found",
+    "API Error (404): User account not found",
+    "404 User account not found",
+]);
 
 Sentry.init({
   dsn: 'https://375656c4b25f5166691c77cc9968565a@o4510460628828160.ingest.de.sentry.io/4510634224648272',
@@ -55,7 +61,7 @@ export default Sentry.wrap(function RootLayout() {
         // Run sync in the background without blocking app startup
         // using setTimeout to allow the app to render and interactions to finish
         setTimeout(() => {
-            runSync().catch((err) => console.error("Background sync failed:", err));
+            runSync();
         }, 1500); // 1.5 seconds delay gives enough time for initial render
 
         // Handle notification tap: navigate to the URL if provided in notification data
@@ -165,6 +171,7 @@ export default Sentry.wrap(function RootLayout() {
                     />
                 </Stack>
                 <SyncToast />
+                <ApiToast />
             </ThemeProvider>
         </>
     );

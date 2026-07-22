@@ -31,6 +31,10 @@ export async function getUserProfile(): Promise<UserProfile | null> {
     } as UserProfile;
 }
 
+export async function clearUserProfile(): Promise<void> {
+    await db.runAsync("DELETE FROM user_profile");
+}
+
 export async function saveUserProfile(
     name: string,
     email?: string,
@@ -61,20 +65,6 @@ export async function saveUserProfile(
                 existing.id,
             ]
         );
-    } else {
-        await db.runAsync(
-            "INSERT INTO user_profile (name, email, image, ai_enabled, ai_provider, api_key, ai_model, sync_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            [
-                name,
-                email ?? null,
-                image ?? null,
-                aiEnabled ? 1 : 0,
-                aiProvider ?? null,
-                apiKey ?? null,
-                aiModel ?? null,
-                Crypto.randomUUID()
-            ]
-        );
     }
 }
 
@@ -85,11 +75,6 @@ export async function setSyncEnabled(enabled: boolean): Promise<void> {
             "UPDATE user_profile SET sync_enabled = ?, synced = 0 WHERE id = ?",
             [enabled ? 1 : 0, existing.id]
         );
-    } else {
-        await db.runAsync(
-            "INSERT INTO user_profile (name, sync_enabled, sync_token) VALUES (?, ?, ?)",
-            ["User", enabled ? 1 : 0, Crypto.randomUUID()]
-        );
     }
 }
 
@@ -99,6 +84,40 @@ export async function setLastSync(dateStr: string): Promise<void> {
         await db.runAsync(
             "UPDATE user_profile SET last_sync = ?, synced = 0 WHERE id = ?",
             [dateStr, existing.id]
+        );
+    }
+}
+
+export async function saveAuthUserProfile(params: {
+    name: string;
+    email: string;
+    syncToken: string;
+    aiEnabled?: boolean;
+    syncEnabled?: boolean;
+}): Promise<void> {
+    const existing = await getUserProfile();
+    if (existing) {
+        await db.runAsync(
+            "UPDATE user_profile SET name = ?, email = ?, sync_token = ?, ai_enabled = ?, sync_enabled = ?, synced = 1 WHERE id = ?",
+            [
+                params.name,
+                params.email,
+                params.syncToken,
+                params.aiEnabled !== undefined ? (params.aiEnabled ? 1 : 0) : existing.ai_enabled ? 1 : 0,
+                params.syncEnabled !== undefined ? (params.syncEnabled ? 1 : 0) : existing.sync_enabled ? 1 : 0,
+                existing.id,
+            ]
+        );
+    } else {
+        await db.runAsync(
+            "INSERT INTO user_profile (name, email, sync_token, ai_enabled, sync_enabled, synced) VALUES (?, ?, ?, ?, ?, 1)",
+            [
+                params.name,
+                params.email,
+                params.syncToken,
+                params.aiEnabled ? 1 : 0,
+                params.syncEnabled ? 1 : 0,
+            ]
         );
     }
 }

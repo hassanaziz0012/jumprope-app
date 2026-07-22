@@ -9,40 +9,64 @@ import {
     getUnsyncedCharts,
     markChartsAsSynced,
     setLastSync,
+    setSyncEnabled,
+    clearUserProfile,
 } from "./database";
 import { setSyncState } from "./syncState";
 import { apiClient } from "./apiClient";
+import { showToast } from "./toastState";
+import { router } from "expo-router";
+
+let isRedirectingToOnboarding = false;
+
+export function isUserNotFoundError(error: any): boolean {
+    return (
+        error?.status === 404 ||
+        (typeof error?.message === "string" &&
+            (error.message.includes("User account not found") ||
+                error.message.includes("User not found")))
+    );
+}
+
+export async function handleAccountNotFound() {
+    if (isRedirectingToOnboarding) return;
+    isRedirectingToOnboarding = true;
+
+    try {
+        await clearUserProfile();
+        showToast("User account not found. Please sign up or log in.", "error", 4000);
+        router.replace("/onboarding" as any);
+    } catch (e) {
+        console.error("Error redirecting to onboarding:", e);
+    } finally {
+        setTimeout(() => {
+            isRedirectingToOnboarding = false;
+        }, 3000);
+    }
+}
 
 /**
  * Synchronize all workouts to the backend API.
  */
 export async function syncWorkouts() {
     const userProfile = await getUserProfile();
-    if (!userProfile) {
-        console.error("No user profile found, cannot sync workouts.");
-        return;
-    }
+    if (!userProfile) return;
 
     const workouts = await getUnsyncedWorkouts();
-    if (workouts.length === 0) {
-        console.log("No unsynced workouts found.");
-        return;
-    }
+    if (workouts.length === 0) return;
 
-    try {
-        await apiClient("/sync/workouts", {
-            body: {
-                user: userProfile,
-                data: workouts,
-            },
-        });
+    const res = await apiClient("/sync/workouts", {
+        body: {
+            user: userProfile,
+            data: workouts,
+        },
+        suppressToast: true,
+    });
 
-        const workoutIds = workouts.map(w => w.id);
+    if (res !== null) {
+        const workoutIds = workouts.map((w) => w.id);
         await markWorkoutsAsSynced(workoutIds);
-
         console.log("Workouts synced successfully.");
-    } catch (error) {
-        console.error("Error syncing workouts:", error);
     }
 }
 
@@ -51,33 +75,24 @@ export async function syncWorkouts() {
  */
 export async function syncGoals() {
     const userProfile = await getUserProfile();
-    if (!userProfile) {
-        console.error("No user profile found, cannot sync goals.");
-        return;
-    }
+    if (!userProfile) return;
 
     const goals = await getUnsyncedGoals();
-    if (!goals) {
-        console.log("No unsynced goals found.");
-        return;
-    }
+    if (!goals) return;
 
-    // Convert single goal object to a list of objects as requested
     const goalsList = [goals];
 
-    try {
-        await apiClient("/sync/goals", {
-            body: {
-                user: userProfile,
-                data: goalsList,
-            },
-        });
+    const res = await apiClient("/sync/goals", {
+        body: {
+            user: userProfile,
+            data: goalsList,
+        },
+        suppressToast: true,
+    });
 
+    if (res !== null) {
         await markGoalAsSynced(goals.id);
-
         console.log("Goals synced successfully.");
-    } catch (error) {
-        console.error("Error syncing goals:", error);
     }
 }
 
@@ -86,33 +101,24 @@ export async function syncGoals() {
  */
 export async function syncRestDays() {
     const userProfile = await getUserProfile();
-    if (!userProfile) {
-        console.error("No user profile found, cannot sync rest days.");
-        return;
-    }
+    if (!userProfile) return;
 
     const restDays = await getUnsyncedRestDays();
-    if (restDays.length === 0) {
-        console.log("No unsynced rest days found.");
-        return;
-    }
+    if (restDays.length === 0) return;
 
-    // Map array of strings to an array of objects
-    const restDaysList = restDays.map(date => ({ date }));
+    const restDaysList = restDays.map((date) => ({ date }));
 
-    try {
-        await apiClient("/sync/rest-days", {
-            body: {
-                user: userProfile,
-                data: restDaysList,
-            },
-        });
+    const res = await apiClient("/sync/rest-days", {
+        body: {
+            user: userProfile,
+            data: restDaysList,
+        },
+        suppressToast: true,
+    });
 
+    if (res !== null) {
         await markRestDaysAsSynced(restDays);
-
         console.log("Rest days synced successfully.");
-    } catch (error) {
-        console.error("Error syncing rest days:", error);
     }
 }
 
@@ -121,31 +127,40 @@ export async function syncRestDays() {
  */
 export async function syncCharts() {
     const userProfile = await getUserProfile();
-    if (!userProfile) {
-        console.error("No user profile found, cannot sync charts.");
-        return;
-    }
+    if (!userProfile) return;
 
     const charts = await getUnsyncedCharts();
-    if (charts.length === 0) {
-        console.log("No unsynced charts found.");
-        return;
-    }
+    if (charts.length === 0) return;
 
-    try {
-        await apiClient("/sync/charts", {
-            body: {
-                user: userProfile,
-                data: charts,
-            },
-        });
+    const res = await apiClient("/sync/charts", {
+        body: {
+            user: userProfile,
+            data: charts,
+        },
+        suppressToast: true,
+    });
 
-        const chartIds = charts.map(c => c.id);
+    if (res !== null) {
+        const chartIds = charts.map((c) => c.id);
         await markChartsAsSynced(chartIds);
-
         console.log("Charts synced successfully.");
-    } catch (error) {
-        console.error("Error syncing charts:", error);
+    }
+}
+
+/**
+ * Synchronize user profile settings to the backend API.
+ */
+export async function syncUserProfile() {
+    const userProfile = await getUserProfile();
+    if (!userProfile) return;
+
+    const res = await apiClient("/sync/user", {
+        body: userProfile,
+        suppressToast: true,
+    });
+
+    if (res !== null) {
+        console.log("User profile synced successfully.");
     }
 }
 
@@ -154,43 +169,22 @@ export async function syncCharts() {
  */
 export async function runSync() {
     console.log("Starting full sync...");
-    setSyncState(true, "SYNCING...");
-    try {
-        await syncWorkouts();
-        await syncGoals();
-        await syncRestDays();
-        await syncCharts();
-        await setLastSync(new Date().toISOString());
-        console.log("Full sync completed.");
-        setSyncState(false, "Sync Completed!");
-        setTimeout(() => setSyncState(false, ""), 2000);
-    } catch (error) {
-        console.error("Sync failed:", error);
-        setSyncState(false, "Sync Failed");
-        setTimeout(() => setSyncState(false, ""), 2000);
-    }
-}
-
-/**
- * Synchronize user profile settings to the backend API.
- * This includes the new 'ai_model' field as part of the serialized userProfile payload.
- */
-export async function syncUserProfile() {
     const userProfile = await getUserProfile();
-    if (!userProfile) {
-        console.error("No user profile found, cannot sync user profile.");
+    if (!userProfile || !userProfile.sync_enabled) {
+        console.log("Sync disabled or no user profile.");
         return;
     }
 
-    try {
-        await apiClient("/sync/user", {
-            body: userProfile,
-        });
-
-        console.log("User profile synced successfully.");
-    } catch (error) {
-        console.error("Error syncing user profile:", error);
-    }
+    setSyncState(true, "SYNCING...");
+    await syncUserProfile();
+    await syncWorkouts();
+    await syncGoals();
+    await syncRestDays();
+    await syncCharts();
+    await setLastSync(new Date().toISOString());
+    console.log("Full sync completed.");
+    setSyncState(false, "Sync Completed!");
+    setTimeout(() => setSyncState(false, ""), 2000);
 }
 
 /**
@@ -198,14 +192,12 @@ export async function syncUserProfile() {
  */
 export async function deleteUserData(): Promise<any> {
     const userProfile = await getUserProfile();
-    if (!userProfile) {
-        throw new Error("No user profile found");
-    }
-    if (!userProfile.sync_token) {
-        throw new Error("No sync token found for the user");
+    if (!userProfile || !userProfile.sync_token) {
+        return null;
     }
 
     return await apiClient(`/sync/delete-user-data?sync_token=${userProfile.sync_token}`, {
         method: "DELETE",
+        suppressToast: true,
     });
 }

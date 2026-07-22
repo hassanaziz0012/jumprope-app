@@ -179,6 +179,7 @@ export function useAIChat() {
 
         try {
             const history = await fetchConversationHistory(id);
+            if (!history) return;
             const formattedMessages: Message[] = history.messages.reduce((acc: Message[], msg, index) => {
                 if (msg.role === "tool" || msg.role === "function") {
                     return acc;
@@ -208,8 +209,7 @@ export function useAIChat() {
             }, []);
 
             setMessages(formattedMessages);
-        } catch (error) {
-            console.error("Failed to load conversation history:", error);
+        } catch {
             setMessages([{
                 id: Date.now().toString(),
                 type: "error",
@@ -226,11 +226,7 @@ export function useAIChat() {
 
     const deleteConversation = async () => {
         if (conversationId) {
-            try {
-                await deleteConversationApi(conversationId);
-            } catch (error) {
-                console.error("Failed to delete conversation from backend:", error);
-            }
+            await deleteConversationApi(conversationId);
         }
         setMessages([]);
         setConversationTitle("");

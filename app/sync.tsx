@@ -2,8 +2,9 @@ import { Stack } from "expo-router";
 import { StyleSheet, Text, View, Pressable, Modal, ScrollView, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useState, useEffect } from "react";
-import { getUserProfile, setSyncEnabled as setSyncEnabledDB, markAllDataAsUnsynced } from "../lib/database";
+import { getUserProfile, setSyncEnabled as setSyncEnabledDB, markAllDataAsUnsynced, clearUserProfile } from "../lib/database";
 import { runSync, deleteUserData } from "../lib/sync";
+import { subscribeToSyncState } from "../lib/syncState";
 import { SyncSettingsCard } from "./components/sync/SyncSettingsCard";
 import { SyncDebugCard } from "./components/sync/SyncDebugCard";
 
@@ -17,16 +18,23 @@ export default function SyncScreen() {
     const [deleteResult, setDeleteResult] = useState<any>(null);
     const [syncToken, setSyncToken] = useState<string | null>(null);
 
+    const loadProfile = async () => {
+        const profile = await getUserProfile();
+        if (profile) {
+            setSyncEnabled(profile.sync_enabled);
+            setLastSync(profile.last_sync);
+            setSyncToken(profile.sync_token);
+        }
+    };
+
     useEffect(() => {
-        const loadProfile = async () => {
-            const profile = await getUserProfile();
-            if (profile) {
-                setSyncEnabled(profile.sync_enabled);
-                setLastSync(profile.last_sync);
-                setSyncToken(profile.sync_token);
-            }
-        };
         loadProfile();
+        const unsubscribe = subscribeToSyncState((isSyncing, message) => {
+            if (!isSyncing && message === "Sync Completed!") {
+                loadProfile();
+            }
+        });
+        return () => unsubscribe();
     }, []);
 
     const handleToggleSync = async (value: boolean) => {
@@ -34,7 +42,13 @@ export default function SyncScreen() {
         await setSyncEnabledDB(value);
         if (value) {
             await runSync();
+            await loadProfile();
         }
+    };
+
+    const handleSyncNow = async () => {
+        await runSync();
+        await loadProfile();
     };
 
     const handleDeleteConfirm = async () => {
@@ -43,14 +57,13 @@ export default function SyncScreen() {
             await markAllDataAsUnsynced();
             const result = await deleteUserData();
             
-            await setSyncEnabledDB(false);
+            await clearUserProfile();
             setSyncEnabled(false);
             setDeleteResult(result);
             
             setShowDeleteModal(false);
             setShowSuccessModal(true);
-        } catch (error) {
-            console.error("Error deleting user data:", error);
+        } catch {
             setShowDeleteModal(false);
         } finally {
             setIsDeleting(false);
@@ -71,7 +84,7 @@ export default function SyncScreen() {
                     syncEnabled={syncEnabled}
                     onToggleSync={handleToggleSync}
                     lastSync={lastSync}
-                    onSyncNow={() => runSync()}
+                    onSyncNow={handleSyncNow}
                     onDeleteData={() => setShowDeleteModal(true)}
                 />
 

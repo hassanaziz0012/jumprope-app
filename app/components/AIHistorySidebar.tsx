@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { getUserProfile } from "../../lib/database";
 import { apiClient } from "../../lib/apiClient";
 
-interface Conversation {
+export interface Conversation {
     id: string;
     title: string;
     created_at: string;
@@ -59,13 +59,13 @@ export default function AIHistorySidebar({ isOpen, onClose, onSelectConversation
                 return;
             }
 
-            const data: Conversation[] = await apiClient<Conversation[]>(
+            const data = await apiClient<Conversation[]>(
                 `/conversations?sync_token=${profile.sync_token}`
             );
-            setConversations(data);
-            groupConversations(data);
-        } catch (error) {
-            console.error("Error fetching conversations:", error);
+            if (data) {
+                setConversations(data);
+                groupConversations(data);
+            }
         } finally {
             setLoading(false);
         }

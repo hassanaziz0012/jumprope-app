@@ -26,8 +26,7 @@ const SIDEBAR_WIDTH = Math.min(SCREEN_WIDTH * 0.8, 320);
 export default function WeeklyDigestHistorySidebar({ isOpen, onClose }: WeeklyDigestHistorySidebarProps) {
     const [slideAnim] = useState(new Animated.Value(SIDEBAR_WIDTH));
     const [loading, setLoading] = useState(false);
-    const [digests, setDigests] = useState<WeeklyDigest[]>([]);
-    const [groupedDigests, setGroupedDigests] = useState<GroupedDigests[]>([]);
+    const [groupedDigests, setGroupedDigests] = useState<{ title: string; data: WeeklyDigest[] }[]>([]);
     const router = useRouter();
 
     useEffect(() => {
@@ -57,11 +56,10 @@ export default function WeeklyDigestHistorySidebar({ isOpen, onClose }: WeeklyDi
                 return;
             }
 
-            const data: WeeklyDigest[] = await apiClient<WeeklyDigest[]>(`/weekly-digests?sync_token=${profile.sync_token}`);
-            setDigests(data);
-            groupDigestsByMonth(data);
-        } catch (error) {
-            console.error("Error fetching weekly digests:", error);
+            const data = await apiClient<WeeklyDigest[]>(`/weekly-digests?sync_token=${profile.sync_token}`);
+            if (data) {
+                groupDigestsByMonth(data);
+            }
         } finally {
             setLoading(false);
         }
