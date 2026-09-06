@@ -18,6 +18,8 @@ out/
 *.dll
 *.so
 *.dylib
+*.apk
+*.aab
 
 # IDEs and editors
 .vscode/
