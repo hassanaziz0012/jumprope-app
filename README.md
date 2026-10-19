@@ -2,6 +2,8 @@
 
 A minimal, offline-first mobile app for tracking your jump rope workouts. Log your sessions, visualize your progress, maintain workout streaks, and crush your fitness goals.
 
+Website: [jumprope.hassandev.me](https://jumprope.hassandev.me) · How I built it: [case study](https://www.hassandev.me/work/jumprope-tracker)
+
 ## Overview
 
 A couple months ago, I started using a jumprope to improve my cardio and lose some weight. It's the most fun cardio I've ever done. But being the geek that I am, I also wanted to track my progress and see how I was doing. So I built this app.
